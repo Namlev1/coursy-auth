@@ -9,11 +9,11 @@ import java.time.Instant
 class User(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    var id: Long,
-    var email: String,
-    var password: String,
+    var id: Long = 0,
     var firstName: String,
     var lastName: String,
+    var email: String,
+    var password: String,
     var companyName: String?,
     var createdAt: Instant = Instant.now(),
     var updatedAt: Instant = Instant.now(),

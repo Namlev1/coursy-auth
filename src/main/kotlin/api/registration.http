@@ -1,0 +1,12 @@
+@url = {{host}}/register
+# POST new random user without company name
+POST {{url}}
+Content-Type: application/json
+
+{
+  "firstName": "{{$random.address.firstName}}",
+  "lastName": "{{$random.address.lastName}}",
+  "email": "{{$random.email}}",
+  "password": "{{$random.alphabetic(20)}}",
+  "roleName": "ROLE_USER"
+}
