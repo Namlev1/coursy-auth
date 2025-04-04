@@ -15,6 +15,7 @@ class UserDetailsImp(
     val lastName: String,
     val companyName: String?,
     private val enabled: Boolean,
+    // todo fix bug "User account is locked
     private val accountNonLocked: Boolean
 
 ) : UserDetails {

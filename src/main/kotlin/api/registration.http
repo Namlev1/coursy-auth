@@ -1,5 +1,5 @@
 @url = {{host}}/register
-# POST new random user without company name
+### POST new random user without company name
 POST {{url}}
 Content-Type: application/json
 
@@ -7,6 +7,21 @@ Content-Type: application/json
   "firstName": "{{$random.address.firstName}}",
   "lastName": "{{$random.address.lastName}}",
   "email": "{{$random.email}}",
-  "password": "{{$random.alphabetic(20)}}",
+  "password": "pa$$w0RD",
   "roleName": "ROLE_USER"
+}
+
+### debug
+### "password": "{{$random.alphabetic(20)}}",
+# @no-cookie-jar
+GET {{url}}/secret
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI5cE85Z0l4c1RqbnBHa0BPR2YuaW8iLCJpYXQiOjE3NDM3NjI2NDUsImV4cCI6MTc0Mzc2NjI0NX0.zoFkM7IEUt-2engBGpEEA53FhvFo1kdy8f48PLnoR-0
+
+### LOGIN
+POST {{url}}/login
+Content-Type: application/json
+
+{
+  "email": "9pO9gIxsTjnpGk@OGf.io",
+  "password": "pa$$w0RD"
 }
