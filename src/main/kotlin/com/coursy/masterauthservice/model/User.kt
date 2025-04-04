@@ -21,13 +21,9 @@ class User(
     var enabled: Boolean = true,
     var accountNonLocked: Boolean = false,
     var failedAttempts: Int = 0,
-    @ManyToMany
-    @JoinTable(
-        name = "user_role",
-        joinColumns = [JoinColumn(name = "user_id")],
-        inverseJoinColumns = [JoinColumn(name = "role_id")]
-    )
-    var roles: MutableSet<Role>
+    @ManyToOne
+    @JoinColumn(name = "role_id")
+    var role: Role
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

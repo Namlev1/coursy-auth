@@ -39,7 +39,7 @@ class UserService(
             email = request.email,
             password = passwordEncoder.encode(request.password),
             companyName = request.companyName,
-            roles = mutableSetOf(role)
+            role = role
         )
         userRepository.save(user)
         return Unit.right()
@@ -54,7 +54,7 @@ class UserService(
         val jwt = jwtUtils.generateJwtToken(authentication)
 
         val userDetails = authentication.principal as UserDetailsImp
-        val roles = userDetails.authorities.map { it.authority }
+        val role = userDetails.authorities.first().toString()
 
         // TODO
 //        val refreshToken = refreshTokenService.createRefreshToken(userDetails.id)
@@ -73,7 +73,8 @@ class UserService(
             firstName = userDetails.firstName,
             lastName = userDetails.lastName,
             companyName = userDetails.companyName,
-            roles = roles
+//            roles = roles
+            role = role
         )
     }
 }

@@ -36,9 +36,7 @@ class UserDetailsImp(
 }
 
 fun User.toUserDetails(): UserDetailsImp {
-    val authorities = this.roles.map {
-        SimpleGrantedAuthority(it.name.name)
-    }.toMutableSet()
+    val authorities = mutableSetOf(SimpleGrantedAuthority(this.role.name.name))
 
     return UserDetailsImp(
         id = this.id,
