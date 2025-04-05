@@ -2,6 +2,7 @@ package com.coursy.masterauthservice.security
 
 import com.coursy.masterauthservice.model.User
 import com.coursy.masterauthservice.type.Email
+import com.coursy.masterauthservice.type.Name
 import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.userdetails.UserDetails
@@ -12,8 +13,8 @@ class UserDetailsImp(
     val email: Email,
     private val authorities: MutableCollection<SimpleGrantedAuthority>,
     private val password: String,
-    val firstName: String,
-    val lastName: String,
+    val firstName: Name,
+    val lastName: Name,
     val companyName: String?,
     private val enabled: Boolean,
     // todo fix bug "User account is locked
