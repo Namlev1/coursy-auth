@@ -69,11 +69,10 @@ class UserService(
             token = jwt,
 //            refreshToken = refreshToken.token,
             id = userDetails.id,
-            email = userDetails.username,
+            email = userDetails.email,
             firstName = userDetails.firstName,
             lastName = userDetails.lastName,
             companyName = userDetails.companyName,
-//            roles = roles
             role = role
         )
     }

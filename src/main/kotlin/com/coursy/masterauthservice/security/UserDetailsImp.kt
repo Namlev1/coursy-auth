@@ -1,6 +1,7 @@
 package com.coursy.masterauthservice.security
 
 import com.coursy.masterauthservice.model.User
+import com.coursy.masterauthservice.type.Email
 import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.userdetails.UserDetails
@@ -8,7 +9,7 @@ import org.springframework.security.core.userdetails.UserDetails
 // todo avoid primitive types
 class UserDetailsImp(
     val id: Long,
-    val email: String,
+    val email: Email,
     private val authorities: MutableCollection<SimpleGrantedAuthority>,
     private val password: String,
     val firstName: String,
@@ -23,7 +24,7 @@ class UserDetailsImp(
 
     override fun getPassword() = password
 
-    override fun getUsername() = email
+    override fun getUsername() = email.toString()
 
     override fun isAccountNonExpired() = true
 
