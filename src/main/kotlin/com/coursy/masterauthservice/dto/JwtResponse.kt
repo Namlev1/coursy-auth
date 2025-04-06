@@ -1,5 +1,6 @@
 package com.coursy.masterauthservice.dto
 
+import com.coursy.masterauthservice.type.CompanyName
 import com.coursy.masterauthservice.type.Email
 import com.coursy.masterauthservice.type.Name
 
@@ -11,6 +12,6 @@ data class JwtResponse(
     val email: Email,
     val firstName: Name,
     val lastName: Name,
-    val companyName: String?,
+    val companyName: CompanyName?,
     val role: String
 )

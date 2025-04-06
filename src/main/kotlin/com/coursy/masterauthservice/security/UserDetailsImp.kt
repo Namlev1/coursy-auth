@@ -2,6 +2,7 @@ package com.coursy.masterauthservice.security
 
 import arrow.core.getOrElse
 import com.coursy.masterauthservice.model.User
+import com.coursy.masterauthservice.type.CompanyName
 import com.coursy.masterauthservice.type.Email
 import com.coursy.masterauthservice.type.Name
 import com.coursy.masterauthservice.type.Password
@@ -9,7 +10,6 @@ import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.userdetails.UserDetails
 
-// todo avoid primitive types
 class UserDetailsImp(
     val id: Long,
     val email: Email,
@@ -17,7 +17,7 @@ class UserDetailsImp(
     private val password: Password,
     val firstName: Name,
     val lastName: Name,
-    val companyName: String?,
+    val companyName: CompanyName?,
     private val enabled: Boolean,
     // todo fix bug "User account is locked
     private val accountNonLocked: Boolean

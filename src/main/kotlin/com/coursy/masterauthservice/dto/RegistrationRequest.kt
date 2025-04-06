@@ -7,11 +7,11 @@ import arrow.core.right
 import com.coursy.masterauthservice.failure.Failure
 import com.coursy.masterauthservice.failure.RoleFailure
 import com.coursy.masterauthservice.model.RoleName
+import com.coursy.masterauthservice.type.CompanyName
 import com.coursy.masterauthservice.type.Email
 import com.coursy.masterauthservice.type.Name
 import com.coursy.masterauthservice.type.Password
 
-// todo primitive obsession
 data class RegistrationRequest(
     val firstName: String,
     val lastName: String,
@@ -25,7 +25,7 @@ data class RegistrationRequest(
         val lastName: Name,
         val email: Email,
         val password: Password,
-        val companyName: String?,
+        val companyName: CompanyName?,
         val roleName: RoleName
     )
 
@@ -34,6 +34,9 @@ data class RegistrationRequest(
         val lastName = Name.create(lastName).getOrElse { return it.left() }
         val email = Email.create(email).getOrElse { return it.left() }
         val password = Password.create(password).getOrElse { return it.left() }
+        val companyName = companyName?.let {
+            CompanyName.create(it).getOrElse { failure -> return failure.left() }
+        }
         val roleName = try {
             RoleName.valueOf(roleName)
         } catch (e: IllegalArgumentException) {
@@ -44,8 +47,7 @@ data class RegistrationRequest(
             lastName = lastName,
             email = email,
             password = password,
-            // todo
-            companyName = "TODO IMPLEMENT",
+            companyName = companyName,
             roleName = roleName
         ).right()
     }

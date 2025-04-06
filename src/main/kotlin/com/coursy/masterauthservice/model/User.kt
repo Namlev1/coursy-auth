@@ -1,12 +1,12 @@
 package com.coursy.masterauthservice.model
 
+import com.coursy.masterauthservice.type.CompanyName
 import com.coursy.masterauthservice.type.Email
 import com.coursy.masterauthservice.type.Name
 import jakarta.persistence.*
 import org.hibernate.Hibernate
 import java.time.Instant
 
-// TODO: avoid primitive types
 @Entity(name = "_user")
 class User(
     @Id
@@ -16,7 +16,7 @@ class User(
     var lastName: Name,
     var email: Email,
     var password: String,
-    var companyName: String?,
+    var companyName: CompanyName?,
     var createdAt: Instant = Instant.now(),
     var updatedAt: Instant = Instant.now(),
     var lastLogin: Instant = Instant.now(),
