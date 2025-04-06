@@ -19,7 +19,7 @@ class NameTest : DescribeSpec({
 
             // then
             val right = nameResult.shouldBeRight()
-            right.toString() shouldBe value
+            right.value shouldBe value
         }
 
         describe("Length") {
@@ -44,7 +44,7 @@ class NameTest : DescribeSpec({
 
                 // then
                 val right = nameResult.shouldBeRight()
-                right.toString() shouldBe value
+                right.value shouldBe value
             }
 
             it("should not create name with length = minlength - 1") {
@@ -68,7 +68,7 @@ class NameTest : DescribeSpec({
 
                 // then
                 val right = nameResult.shouldBeRight()
-                right.toString() shouldBe value
+                right.value shouldBe value
             }
         }
 
@@ -106,7 +106,7 @@ class NameTest : DescribeSpec({
 
                 // then
                 val right = nameResult.shouldBeRight()
-                right.toString() shouldBe value
+                right.value shouldBe value
             }
 
             it("should create name with hyphens") {
@@ -118,7 +118,7 @@ class NameTest : DescribeSpec({
 
                 // then
                 val right = nameResult.shouldBeRight()
-                right.toString() shouldBe value
+                right.value shouldBe value
             }
 
             it("should create name with apostrophes") {
@@ -130,7 +130,7 @@ class NameTest : DescribeSpec({
 
                 // then
                 val right = nameResult.shouldBeRight()
-                right.toString() shouldBe value
+                right.value shouldBe value
             }
 
             it("should create name with accented characters") {
@@ -142,7 +142,7 @@ class NameTest : DescribeSpec({
 
                 // then
                 val right = nameResult.shouldBeRight()
-                right.toString() shouldBe value
+                right.value shouldBe value
             }
 
             it("should create name starting with small character") {
@@ -154,7 +154,7 @@ class NameTest : DescribeSpec({
 
                 // then
                 val right = nameResult.shouldBeRight()
-                right.toString() shouldBe value
+                right.value shouldBe value
             }
         }
 

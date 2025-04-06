@@ -6,7 +6,7 @@ import arrow.core.right
 import com.coursy.masterauthservice.failure.PasswordFailure
 
 @JvmInline
-value class Password private constructor(private val value: String) {
+value class Password private constructor(val value: String) {
     companion object {
         private const val MIN_LENGTH = 8
         private const val MAX_LENGTH = 72
@@ -51,5 +51,5 @@ value class Password private constructor(private val value: String) {
         }
     }
 
-    override fun toString(): String = value
+    override fun toString(): String = "*****"
 }

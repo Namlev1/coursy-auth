@@ -19,7 +19,7 @@ class PasswordTest : DescribeSpec({
 
             // then
             val right = passwordResult.shouldBeRight()
-            right.toString() shouldBe value
+            right.value shouldBe value
         }
 
         describe("Length") {
@@ -44,7 +44,7 @@ class PasswordTest : DescribeSpec({
 
                 // then
                 val right = passwordResult.shouldBeRight()
-                right.toString() shouldBe value
+                right.value shouldBe value
             }
 
             it("should not create password with length = minLength - 1") {
@@ -68,7 +68,7 @@ class PasswordTest : DescribeSpec({
 
                 // then
                 val right = passwordResult.shouldBeRight()
-                right.toString() shouldBe value
+                right.value shouldBe value
             }
         }
 

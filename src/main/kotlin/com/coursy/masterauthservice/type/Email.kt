@@ -6,7 +6,7 @@ import arrow.core.right
 import com.coursy.masterauthservice.failure.EmailFailure
 
 @JvmInline
-value class Email private constructor(private val value: String) {
+value class Email private constructor(val value: String) {
     companion object {
         private val EMAIL_REGEX = Regex("^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$")
         private const val MIN_LENGTH = 6
@@ -21,6 +21,4 @@ value class Email private constructor(private val value: String) {
             else -> Email(value).right()
         }
     }
-
-    override fun toString(): String = value
 }

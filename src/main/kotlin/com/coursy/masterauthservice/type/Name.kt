@@ -6,7 +6,7 @@ import arrow.core.right
 import com.coursy.masterauthservice.failure.NameFailure
 
 @JvmInline
-value class Name private constructor(private val value: String) {
+value class Name private constructor(val value: String) {
     companion object {
         private const val MIN_LENGTH = 2
         private const val MAX_LENGTH = 50
@@ -23,6 +23,4 @@ value class Name private constructor(private val value: String) {
             else -> Name(value).right()
         }
     }
-
-    override fun toString(): String = value
 }

@@ -35,7 +35,7 @@ class UserService(
                 ?: return RoleFailure.NotFound.left()
 
         // TODO implement better handling
-        val encryptedPassword = passwordEncoder.encode(request.password.toString())
+        val encryptedPassword = passwordEncoder.encode(request.password.value)
         val user = User(
             firstName = request.firstName,
             lastName = request.lastName,

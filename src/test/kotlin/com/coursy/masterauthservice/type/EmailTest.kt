@@ -18,7 +18,7 @@ class EmailTest : DescribeSpec({
 
             // then
             val right = emailResult.shouldBeRight()
-            right.toString() shouldBe value
+            right.value shouldBe value
         }
 
         describe("Length") {
@@ -43,7 +43,7 @@ class EmailTest : DescribeSpec({
 
                 // then
                 val right = emailResult.shouldBeRight()
-                right.toString() shouldBe value
+                right.value shouldBe value
             }
 
             it("should not create email with length = minlength - 1") {
@@ -67,7 +67,7 @@ class EmailTest : DescribeSpec({
 
                 // then
                 val right = emailResult.shouldBeRight()
-                right.toString() shouldBe value
+                right.value shouldBe value
             }
         }
 
@@ -117,7 +117,7 @@ class EmailTest : DescribeSpec({
 
                 // then
                 val right = emailResult.shouldBeRight()
-                right.toString() shouldBe value
+                right.value shouldBe value
             }
         }
     }
