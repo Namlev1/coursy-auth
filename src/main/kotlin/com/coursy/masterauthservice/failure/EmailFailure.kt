@@ -1,13 +1,13 @@
 package com.coursy.masterauthservice.failure
 
-sealed class EmailFailure {
+sealed class EmailFailure : Failure {
     data object Empty : EmailFailure()
     data object MissingAtSymbol : EmailFailure()
     data object InvalidFormat : EmailFailure()
     data class TooShort(val minLength: Int) : EmailFailure()
     data class TooLong(val maxLength: Int) : EmailFailure()
 
-    fun message(): String = when (this) {
+    override fun message(): String = when (this) {
         Empty -> "Email cannot be empty"
         MissingAtSymbol -> "Email must contain an @ symbol"
         InvalidFormat -> "Email format is invalid"

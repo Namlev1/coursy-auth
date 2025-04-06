@@ -6,6 +6,7 @@ import arrow.core.right
 import com.coursy.masterauthservice.dto.JwtResponse
 import com.coursy.masterauthservice.dto.LoginRequest
 import com.coursy.masterauthservice.dto.RegistrationRequest
+import com.coursy.masterauthservice.failure.Failure
 import com.coursy.masterauthservice.failure.RoleFailure
 import com.coursy.masterauthservice.model.User
 import com.coursy.masterauthservice.repository.RoleRepository
@@ -28,16 +29,18 @@ class UserService(
     private val authenticationManager: AuthenticationManager,
     private val jwtUtils: JwtUtils
 ) {
-    fun createUser(request: RegistrationRequest): Either<RoleFailure, Unit> {
+    fun createUser(request: RegistrationRequest.Validated): Either<Failure, Unit> {
         val role =
-            roleRepository.findByName(request.roleName) ?: return RoleFailure
-                .NotFound(request.roleName.toString())
-                .left()
+            roleRepository.findByName(request.roleName)
+                ?: return RoleFailure.NotFound.left()
+
+        // TODO implement better handling
+        val encryptedPassword = passwordEncoder.encode(request.password.toString())
         val user = User(
             firstName = request.firstName,
             lastName = request.lastName,
             email = request.email,
-            password = passwordEncoder.encode(request.password),
+            password = encryptedPassword,
             companyName = request.companyName,
             role = role
         )

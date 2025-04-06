@@ -1,8 +1,10 @@
 package com.coursy.masterauthservice.security
 
+import arrow.core.getOrElse
 import com.coursy.masterauthservice.model.User
 import com.coursy.masterauthservice.type.Email
 import com.coursy.masterauthservice.type.Name
+import com.coursy.masterauthservice.type.Password
 import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.userdetails.UserDetails
@@ -12,7 +14,7 @@ class UserDetailsImp(
     val id: Long,
     val email: Email,
     private val authorities: MutableCollection<SimpleGrantedAuthority>,
-    private val password: String,
+    private val password: Password,
     val firstName: Name,
     val lastName: Name,
     val companyName: String?,
@@ -23,7 +25,7 @@ class UserDetailsImp(
 ) : UserDetails {
     override fun getAuthorities(): Collection<GrantedAuthority> = authorities
 
-    override fun getPassword() = password
+    override fun getPassword() = password.toString()
 
     override fun getUsername() = email.toString()
 
@@ -39,11 +41,14 @@ class UserDetailsImp(
 
 fun User.toUserDetails(): UserDetailsImp {
     val authorities = mutableSetOf(SimpleGrantedAuthority(this.role.name.name))
+    val password = Password.create(this.password).getOrElse {
+        throw IllegalStateException("User encrypted password is not valid Password object")
+    }
 
     return UserDetailsImp(
         id = this.id,
         email = this.email,
-        password = this.password,
+        password = password,
         firstName = this.firstName,
         lastName = this.lastName,
         companyName = this.companyName,
