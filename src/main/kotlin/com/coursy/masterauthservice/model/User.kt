@@ -22,7 +22,7 @@ class User(
     var updatedAt: Instant = Instant.now(),
     var lastLogin: Instant = Instant.now(),
     var enabled: Boolean = true,
-    var accountNonLocked: Boolean = false,
+    var accountNonLocked: Boolean = true,
     var failedAttempts: Int = 0,
     @ManyToOne
     @JoinColumn(name = "role_id")
