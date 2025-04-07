@@ -73,12 +73,6 @@ class UserService(
         return JwtResponse(
             token = jwt,
 //            refreshToken = refreshToken.token,
-            id = userDetails.id,
-            email = userDetails.email,
-            firstName = userDetails.firstName,
-            lastName = userDetails.lastName,
-            companyName = userDetails.companyName,
-            role = role
         ).right()
     }
 }
