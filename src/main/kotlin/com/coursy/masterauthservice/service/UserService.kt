@@ -6,6 +6,7 @@ import arrow.core.right
 import com.coursy.masterauthservice.dto.JwtResponse
 import com.coursy.masterauthservice.dto.LoginRequest
 import com.coursy.masterauthservice.dto.RegistrationRequest
+import com.coursy.masterauthservice.failure.AuthenticationFailure
 import com.coursy.masterauthservice.failure.Failure
 import com.coursy.masterauthservice.failure.RoleFailure
 import com.coursy.masterauthservice.model.User
@@ -15,7 +16,6 @@ import com.coursy.masterauthservice.security.JwtUtils
 import com.coursy.masterauthservice.security.UserDetailsImp
 import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
-import org.springframework.security.core.Authentication
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
@@ -79,6 +79,6 @@ class UserService(
             lastName = userDetails.lastName,
             companyName = userDetails.companyName,
             role = role
-        )
+        ).right()
     }
 }

@@ -14,6 +14,7 @@ class User(
     var id: Long = 0,
     var firstName: Name,
     var lastName: Name,
+    @Column(unique = true)
     var email: Email,
     var password: String,
     var companyName: CompanyName?,
