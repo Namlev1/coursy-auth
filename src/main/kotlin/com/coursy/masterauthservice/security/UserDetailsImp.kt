@@ -17,8 +17,7 @@ class UserDetailsImp(
     val lastName: Name,
     val companyName: CompanyName?,
     private val enabled: Boolean,
-    // todo fix bug
-    private val accountNonLocked: Boolean = true
+    private val accountNonLocked: Boolean
 
 ) : UserDetails {
     override fun getAuthorities(): Collection<GrantedAuthority> = authorities
