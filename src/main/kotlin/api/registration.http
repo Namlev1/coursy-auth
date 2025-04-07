@@ -1,5 +1,24 @@
 @url = {{host}}/register
-### POST new random user without company name
+
+### POST new random USER without company name
+< {%
+    const email = $random.email
+    client.global.set("email", email)
+    request.variables.set("email", email)
+    console.log(email)
+%}
+POST {{url}}
+Content-Type: application/json
+
+{
+  "firstName": "{{$random.address.firstName}}",
+  "lastName": "{{$random.address.lastName}}",
+  "email": "{{email}}",
+  "password": "pa$$w0RD",
+  "roleName": "ROLE_USER"
+}
+
+### POST new random USER with company name
 POST {{url}}
 Content-Type: application/json
 
@@ -8,20 +27,30 @@ Content-Type: application/json
   "lastName": "{{$random.address.lastName}}",
   "email": "{{$random.email}}",
   "password": "pa$$w0RD",
-  "roleName": "ROLE_USER"
+  "roleName": "ROLE_USER",
+  "companyName": "{{$random.company.name}}"
 }
 
-### debug
-### "password": "{{$random.alphabetic(20)}}",
-# @no-cookie-jar
-GET {{url}}/secret
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI5cE85Z0l4c1RqbnBHa0BPR2YuaW8iLCJpYXQiOjE3NDM3NjI2NDUsImV4cCI6MTc0Mzc2NjI0NX0.zoFkM7IEUt-2engBGpEEA53FhvFo1kdy8f48PLnoR-0
-
-### LOGIN
-POST {{url}}/login
+### POST new random ADMIN
+POST {{url}}
 Content-Type: application/json
 
 {
-  "email": "9pO9gIxsTjnpGk@OGf.io",
-  "password": "pa$$w0RD"
+  "firstName": "{{$random.address.firstName}}",
+  "lastName": "{{$random.address.lastName}}",
+  "email": "{{$random.email}}",
+  "password": "pa$$w0RD",
+  "roleName": "ROLE_ADMIN"
+}
+
+### POST new random SUPER ADMIN
+POST {{url}}
+Content-Type: application/json
+
+{
+  "firstName": "{{$random.address.firstName}}",
+  "lastName": "{{$random.address.lastName}}",
+  "email": "{{$random.email}}",
+  "password": "pa$$w0RD",
+  "roleName": "ROLE_SUPER_ADMIN"
 }

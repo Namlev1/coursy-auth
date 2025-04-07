@@ -1,0 +1,10 @@
+@url = {{host}}/register
+
+### GET test endpoint requiring authorization
+# @no-cookie-jar
+< {%
+    const token = client.global.get("token")
+    request.variables.set("token", token)
+%}
+GET {{url}}/secret
+Authorization: Bearer {{token}}

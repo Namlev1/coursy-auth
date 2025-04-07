@@ -1,0 +1,21 @@
+@url = {{host}}/register
+
+### LOGIN with recently created user account
+< {%
+    const email = client.global.get("email")
+    console.log(email)
+    request.variables.set("email", client.global.get("email"))
+%}
+POST {{url}}/login
+Content-Type: application/json
+
+{
+  "email": "{{email}}",
+  "password": "pa$$w0RD"
+}
+
+> {%
+    const token = response.body.token
+    console.log(token)
+    client.global.set("token", token)
+%}
