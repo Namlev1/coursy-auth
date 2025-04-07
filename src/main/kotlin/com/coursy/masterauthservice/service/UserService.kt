@@ -48,10 +48,12 @@ class UserService(
         return Unit.right()
     }
 
-    fun authenticateUser(loginRequest: LoginRequest): JwtResponse {
-        val authentication: Authentication = authenticationManager.authenticate(
-            UsernamePasswordAuthenticationToken(loginRequest.email, loginRequest.password)
-        )
+    fun authenticateUser(loginRequest: LoginRequest.Validated): Either<AuthenticationFailure, JwtResponse> {
+        val authentication = runCatching {
+            authenticationManager.authenticate(
+                UsernamePasswordAuthenticationToken(loginRequest.email.value, loginRequest.password.value)
+            )
+        }.getOrElse { return AuthenticationFailure.InvalidCredentials.left() }
 
         SecurityContextHolder.getContext().authentication = authentication
         val jwt = jwtUtils.generateJwtToken(authentication)

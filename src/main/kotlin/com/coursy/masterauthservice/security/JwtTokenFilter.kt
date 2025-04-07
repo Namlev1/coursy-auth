@@ -30,8 +30,8 @@ class JwtTokenFilter(
             },
             { jwt ->
                 if (jwtUtils.validateJwtToken(jwt)) {
-                    val username = jwtUtils.getUserNameFromJwtToken(jwt)
-                    val userDetails = userDetailsService.loadUserByUsername(username)
+                    val email = jwtUtils.getUserNameFromJwtToken(jwt)
+                    val userDetails = userDetailsService.loadUserByUsername(email)
                     val authentication = UsernamePasswordAuthenticationToken(
                         userDetails, null, userDetails.authorities
                     )
@@ -44,6 +44,7 @@ class JwtTokenFilter(
         filterChain.doFilter(request, response)
     }
 
+    // todo add failures
     private fun parseJwt(request: HttpServletRequest): Either<String, String> {
         val headerAuth = request.getHeader("Authorization")
             ?: return "Missing Authorization header".left()

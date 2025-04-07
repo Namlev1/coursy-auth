@@ -19,7 +19,7 @@ data class RegistrationRequest(
     val password: String,
     val companyName: String?,
     val roleName: String
-) : SelfValidating<Any, RegistrationRequest.Validated> {
+) : SelfValidating<Failure, RegistrationRequest.Validated> {
     data class Validated(
         val firstName: Name,
         val lastName: Name,

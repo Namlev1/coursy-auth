@@ -4,7 +4,6 @@ import com.coursy.masterauthservice.type.CompanyName
 import com.coursy.masterauthservice.type.Email
 import com.coursy.masterauthservice.type.Name
 
-// TODO primitive obsession
 data class JwtResponse(
     val token: String,
 //    val refreshToken: String,

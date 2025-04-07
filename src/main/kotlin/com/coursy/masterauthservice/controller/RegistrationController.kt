@@ -1,7 +1,6 @@
 package com.coursy.masterauthservice.controller
 
 import arrow.core.flatMap
-import com.coursy.masterauthservice.dto.JwtResponse
 import com.coursy.masterauthservice.dto.LoginRequest
 import com.coursy.masterauthservice.dto.RegistrationRequest
 import com.coursy.masterauthservice.failure.Failure
@@ -27,9 +26,13 @@ class RegistrationController(
     }
 
     @PostMapping("/login")
-    fun authenticateUser(@RequestBody loginRequest: LoginRequest): ResponseEntity<JwtResponse> {
-        val jwtResponse = userService.authenticateUser(loginRequest)
-        return ResponseEntity.ok(jwtResponse)
+    fun authenticateUser(@RequestBody request: LoginRequest): ResponseEntity<Any> {
+        val result = request.validate().flatMap { validated -> userService.authenticateUser(validated) }
+
+        return result.fold(
+            { failure -> handleFailure(failure) },
+            { jwtResponse -> ResponseEntity.status(HttpStatus.OK).body(jwtResponse) }
+        )
     }
 
     @GetMapping("/secret")
@@ -38,7 +41,6 @@ class RegistrationController(
     // todo extract to http resolver
     private fun handleFailure(failure: Failure): ResponseEntity<Any> =
         when (failure) {
-//            is RoleFailure.NotFound -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(failure.name)
             is RoleFailure.NotFound -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(failure.message())
             else -> ResponseEntity.status(HttpStatus.BAD_REQUEST).body(failure.message())
         }
