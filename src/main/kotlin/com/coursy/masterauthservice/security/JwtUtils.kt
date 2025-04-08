@@ -9,12 +9,13 @@ import org.springframework.stereotype.Component
 import java.util.*
 
 @Component
-class JwtUtils {
+class JwtUtils(
     @Value("\${jwt.secret}")
-    private lateinit var jwtSecret: String
+    private var jwtSecret: String,
 
     @Value("\${jwt.access-token-expiration}")
     private var jwtExpirationMs: Int = 0
+) {
 
     fun generateJwtToken(authentication: Authentication): String =
         (authentication.principal as UserDetailsImp).let { generateJwt(it.email.value, it.authorities) }
