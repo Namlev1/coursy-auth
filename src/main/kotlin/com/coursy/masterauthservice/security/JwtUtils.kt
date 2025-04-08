@@ -16,10 +16,8 @@ class JwtUtils {
     @Value("\${jwt.access-token-expiration}")
     private var jwtExpirationMs: Int = 0
 
-    //  TODO I need another endpoint to obtain user details, such as email or first name.
-    //   therefore, I need 2 controllers: one for auth, another for user data and registration.
     fun generateJwtToken(authentication: Authentication): String =
-        (authentication.principal as UserDetailsImp).let { generateJwt(it.id, it.authorities) }
+        (authentication.principal as UserDetailsImp).let { generateJwt(it.email.value, it.authorities) }
 
     fun getUserNameFromJwtToken(token: String): String =
         JWT.require(Algorithm.HMAC256(jwtSecret))
@@ -33,8 +31,8 @@ class JwtUtils {
             true
         }.getOrElse { false }
 
-    private fun generateJwt(subject: Long, roles: Collection<GrantedAuthority>): String = JWT.create()
-        .withSubject(subject.toString())
+    private fun generateJwt(subject: String, roles: Collection<GrantedAuthority>): String = JWT.create()
+        .withSubject(subject)
         .withClaim("roles", roles.map { it.authority })
         .withIssuedAt(Date())
         .withExpiresAt(Date(System.currentTimeMillis() + jwtExpirationMs))
