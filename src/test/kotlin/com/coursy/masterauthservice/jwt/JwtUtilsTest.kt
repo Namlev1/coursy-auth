@@ -1,7 +1,8 @@
-package com.coursy.masterauthservice.security
+package com.coursy.masterauthservice.jwt
 
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
+import com.coursy.masterauthservice.security.UserDetailsImp
 import com.coursy.masterauthservice.type.Email
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe

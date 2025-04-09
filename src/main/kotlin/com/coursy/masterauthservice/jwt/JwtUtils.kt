@@ -1,7 +1,8 @@
-package com.coursy.masterauthservice.security
+package com.coursy.masterauthservice.jwt
 
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
+import com.coursy.masterauthservice.security.UserDetailsImp
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.core.Authentication
 import org.springframework.security.core.GrantedAuthority
@@ -15,18 +16,18 @@ class JwtUtils(
 
     @Value("\${jwt.access-token-expiration}")
     private var jwtExpirationMs: Int = 0
-) {
+) : JwtTokenService {
 
-    fun generateJwtToken(authentication: Authentication): String =
+    override fun generateJwtToken(authentication: Authentication): String =
         (authentication.principal as UserDetailsImp).let { generateJwt(it.email.value, it.authorities) }
 
-    fun getUserEmailFromJwtToken(token: String): String =
+    override fun getUserEmailFromJwtToken(token: String): String =
         JWT.require(Algorithm.HMAC256(jwtSecret))
             .build()
             .verify(token)
             .subject
 
-    fun validateJwtToken(authToken: String): Boolean =
+    override fun validateJwtToken(authToken: String): Boolean =
         runCatching {
             JWT.require(Algorithm.HMAC256(jwtSecret)).build().verify(authToken)
             true

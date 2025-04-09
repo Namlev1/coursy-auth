@@ -3,6 +3,7 @@ package com.coursy.masterauthservice.security
 import arrow.core.Either
 import arrow.core.left
 import arrow.core.right
+import com.coursy.masterauthservice.jwt.JwtTokenService
 import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
@@ -14,7 +15,7 @@ import org.springframework.web.filter.OncePerRequestFilter
 
 @Component
 class JwtTokenFilter(
-    private val jwtUtils: JwtUtils,
+    private val jwtTokenService: JwtTokenService,
     private val userDetailsService: UserDetailsServiceImp
 ) : OncePerRequestFilter() {
 
@@ -29,8 +30,8 @@ class JwtTokenFilter(
                 logger.error("JWT parse error: $error")
             },
             { jwt ->
-                if (jwtUtils.validateJwtToken(jwt)) {
-                    val email = jwtUtils.getUserEmailFromJwtToken(jwt)
+                if (jwtTokenService.validateJwtToken(jwt)) {
+                    val email = jwtTokenService.getUserEmailFromJwtToken(jwt)
                     val userDetails = userDetailsService.loadUserByUsername(email)
                     val authentication = UsernamePasswordAuthenticationToken(
                         userDetails, null, userDetails.authorities

@@ -9,10 +9,10 @@ import com.coursy.masterauthservice.dto.RegistrationRequest
 import com.coursy.masterauthservice.failure.AuthenticationFailure
 import com.coursy.masterauthservice.failure.Failure
 import com.coursy.masterauthservice.failure.RoleFailure
+import com.coursy.masterauthservice.jwt.JwtTokenService
 import com.coursy.masterauthservice.model.User
 import com.coursy.masterauthservice.repository.RoleRepository
 import com.coursy.masterauthservice.repository.UserRepository
-import com.coursy.masterauthservice.security.JwtUtils
 import com.coursy.masterauthservice.security.UserDetailsImp
 import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
@@ -27,7 +27,7 @@ class UserService(
     private val roleRepository: RoleRepository,
     private val passwordEncoder: PasswordEncoder,
     private val authenticationManager: AuthenticationManager,
-    private val jwtUtils: JwtUtils
+    private val jwtTokenService: JwtTokenService
 ) {
     fun createUser(request: RegistrationRequest.Validated): Either<Failure, Unit> {
         val role =
@@ -56,7 +56,7 @@ class UserService(
         }.getOrElse { return AuthenticationFailure.InvalidCredentials.left() }
 
         SecurityContextHolder.getContext().authentication = authentication
-        val jwt = jwtUtils.generateJwtToken(authentication)
+        val jwt = jwtTokenService.generateJwtToken(authentication)
 
         val userDetails = authentication.principal as UserDetailsImp
         val role = userDetails.authorities.first().toString()
