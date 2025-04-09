@@ -30,7 +30,7 @@ class JwtTokenFilter(
             },
             { jwt ->
                 if (jwtUtils.validateJwtToken(jwt)) {
-                    val email = jwtUtils.getUserNameFromJwtToken(jwt)
+                    val email = jwtUtils.getUserEmailFromJwtToken(jwt)
                     val userDetails = userDetailsService.loadUserByUsername(email)
                     val authentication = UsernamePasswordAuthenticationToken(
                         userDetails, null, userDetails.authorities

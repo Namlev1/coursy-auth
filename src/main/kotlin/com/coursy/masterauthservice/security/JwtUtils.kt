@@ -20,7 +20,7 @@ class JwtUtils(
     fun generateJwtToken(authentication: Authentication): String =
         (authentication.principal as UserDetailsImp).let { generateJwt(it.email.value, it.authorities) }
 
-    fun getUserNameFromJwtToken(token: String): String =
+    fun getUserEmailFromJwtToken(token: String): String =
         JWT.require(Algorithm.HMAC256(jwtSecret))
             .build()
             .verify(token)
