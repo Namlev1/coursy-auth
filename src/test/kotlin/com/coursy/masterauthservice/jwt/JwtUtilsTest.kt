@@ -53,10 +53,10 @@ class JwtUtilsTest : DescribeSpec({
             val token = jwtUtils.generateJwtToken(mockAuthentication)
 
             // when
-            val extractedUserId = jwtUtils.getUserEmailFromJwtToken(token)
+            val extractedUserEmail = jwtUtils.getUserEmailFromJwtToken(token)
 
             // then
-            extractedUserId shouldBe userEmail.value
+            extractedUserEmail shouldBe userEmail.value
         }
     }
 
