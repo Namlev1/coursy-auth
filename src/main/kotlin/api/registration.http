@@ -1,4 +1,4 @@
-@url = {{host}}/register
+@url = {{host}}/user
 
 ### POST new random USER without company name
 < {%

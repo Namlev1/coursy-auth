@@ -35,8 +35,8 @@ class SecurityConfig(
         http.csrf { it.disable() }
             .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
             .authorizeHttpRequests {
-                it.requestMatchers("/v1/register").permitAll()
-                    .requestMatchers("/v1/register/login").permitAll()
+                it.requestMatchers("/v1/user").permitAll()
+                    .requestMatchers("/v1/auth/login").permitAll()
                     .anyRequest().authenticated()
             }
 

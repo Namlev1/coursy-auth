@@ -1,4 +1,4 @@
-@url = {{host}}/register
+@url = {{host}}/auth
 
 ### GET test endpoint requiring authorization
 # @no-cookie-jar

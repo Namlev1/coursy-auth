@@ -1,4 +1,4 @@
-@url = {{host}}/register
+@url = {{host}}/auth
 
 ### LOGIN with recently created user account
 < {%
