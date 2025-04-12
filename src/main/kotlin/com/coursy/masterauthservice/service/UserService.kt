@@ -6,6 +6,8 @@ import arrow.core.right
 import com.coursy.masterauthservice.dto.RegistrationRequest
 import com.coursy.masterauthservice.failure.Failure
 import com.coursy.masterauthservice.failure.RoleFailure
+import com.coursy.masterauthservice.failure.UserFailure
+import com.coursy.masterauthservice.model.Role
 import com.coursy.masterauthservice.model.User
 import com.coursy.masterauthservice.repository.RoleRepository
 import com.coursy.masterauthservice.repository.UserRepository
@@ -19,13 +21,22 @@ class UserService(
     private val passwordEncoder: PasswordEncoder,
 ) {
     fun createUser(request: RegistrationRequest.Validated): Either<Failure, Unit> {
+        if (userRepository.existsByEmail(request.email)) {
+            return UserFailure.EmailAlreadyExists.left()
+        }
+        
         val role =
             roleRepository.findByName(request.roleName)
                 ?: return RoleFailure.NotFound.left()
 
-        // TODO implement better handling
+        val user = createUser(request, role)
+        userRepository.save(user)
+        return Unit.right()
+    }
+
+    private fun createUser(request: RegistrationRequest.Validated, role: Role): User {
         val encryptedPassword = passwordEncoder.encode(request.password.value)
-        val user = User(
+        return User(
             firstName = request.firstName,
             lastName = request.lastName,
             email = request.email,
@@ -33,8 +44,6 @@ class UserService(
             companyName = request.companyName,
             role = role
         )
-        userRepository.save(user)
-        return Unit.right()
     }
 
 }
