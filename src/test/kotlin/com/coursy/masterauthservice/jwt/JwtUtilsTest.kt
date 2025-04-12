@@ -66,7 +66,7 @@ class JwtUtilsTest : DescribeSpec({
             val token = jwtUtils.generateJwtToken(mockAuthentication)
 
             // when
-            val isValid = jwtUtils.validateJwtToken(token)
+            val isValid = jwtUtils.isJwtTokenValid(token)
 
             // then
             isValid shouldBe true
@@ -78,7 +78,7 @@ class JwtUtilsTest : DescribeSpec({
 
             // when
             Thread.sleep(3000)
-            val isValid = jwtUtils.validateJwtToken(expiredToken)
+            val isValid = jwtUtils.isJwtTokenValid(expiredToken)
 
             // then
             isValid shouldBe false
@@ -90,7 +90,7 @@ class JwtUtilsTest : DescribeSpec({
 
             // when - create a new JwtUtils with different secret to test validation
             val jwtUtilsWithDifferentSecret = JwtUtils("differentSecret", jwtExpirationMs)
-            val isValid = jwtUtilsWithDifferentSecret.validateJwtToken(token)
+            val isValid = jwtUtilsWithDifferentSecret.isJwtTokenValid(token)
 
             // then
             isValid shouldBe false
@@ -101,7 +101,7 @@ class JwtUtilsTest : DescribeSpec({
             val malformedToken = "malformed.token.string"
 
             // when
-            val isValid = jwtUtils.validateJwtToken(malformedToken)
+            val isValid = jwtUtils.isJwtTokenValid(malformedToken)
 
             // then
             isValid shouldBe false

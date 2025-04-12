@@ -3,6 +3,8 @@ package com.coursy.masterauthservice.security
 import arrow.core.Either
 import arrow.core.left
 import arrow.core.right
+import com.coursy.masterauthservice.failure.AuthHeaderFailure
+import com.coursy.masterauthservice.failure.JwtFailure
 import com.coursy.masterauthservice.jwt.JwtTokenService
 import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletRequest
@@ -19,41 +21,70 @@ class JwtTokenFilter(
     private val userDetailsService: UserDetailsServiceImp
 ) : OncePerRequestFilter() {
 
-    // TODO check everything if working correctly. Refactor later.
     override fun doFilterInternal(
         request: HttpServletRequest,
         response: HttpServletResponse,
         filterChain: FilterChain
     ) {
-        parseJwt(request).fold(
-            { error ->
-                logger.error("JWT parse error: $error")
-            },
-            { jwt ->
-                if (jwtTokenService.validateJwtToken(jwt)) {
-                    val email = jwtTokenService.getUserEmailFromJwtToken(jwt)
-                    val userDetails = userDetailsService.loadUserByUsername(email)
-                    val authentication = UsernamePasswordAuthenticationToken(
-                        userDetails, null, userDetails.authorities
-                    )
-                    authentication.details = WebAuthenticationDetailsSource().buildDetails(request)
-                    SecurityContextHolder.getContext().authentication = authentication
-                }
-            }
-        )
-
-        filterChain.doFilter(request, response)
+        try {
+            extractAndProcessJwt(request)
+        } finally {
+            filterChain.doFilter(request, response)
+        }
     }
 
-    // todo add failures
-    private fun parseJwt(request: HttpServletRequest): Either<String, String> {
+    private fun extractAndProcessJwt(request: HttpServletRequest) {
+        parseJwt(request).fold(
+            { authHeaderFailure -> handleHeaderFailure(authHeaderFailure) },
+            { jwt -> authenticateWithJwt(jwt, request) }
+        )
+    }
+
+    private fun handleHeaderFailure(error: AuthHeaderFailure) {
+        when (error) {
+            is AuthHeaderFailure.InvalidHeaderFormat ->
+                logger.warn("Invalid Authorization header format: ${error.message()}")
+
+            else -> {}
+        }
+    }
+
+    private fun authenticateWithJwt(jwt: String, request: HttpServletRequest) {
+        setAuthenticationContext(jwt, request).fold(
+            { jwtError -> logger.warn("JWT token processing error: ${jwtError.message()}") },
+            { /* Authentication successful, no action needed */ }
+        )
+    }
+
+    private fun parseJwt(request: HttpServletRequest): Either<AuthHeaderFailure, String> {
         val headerAuth = request.getHeader("Authorization")
-            ?: return "Missing Authorization header".left()
+            ?: return AuthHeaderFailure.MissingHeader.left()
 
         return if (headerAuth.startsWith("Bearer ")) {
-            headerAuth.removePrefix("Bearer ").right()
+            headerAuth.removePrefix("Bearer ").trim().right()
         } else {
-            "Invalid Authorization header format".left()
+            AuthHeaderFailure.InvalidHeaderFormat(headerAuth).left()
+        }
+    }
+
+    private fun setAuthenticationContext(
+        jwt: String,
+        request: HttpServletRequest
+    ): Either<JwtFailure, Unit> {
+        return try {
+            val email = jwtTokenService.getUserEmailFromJwtToken(jwt)
+            val userDetails = userDetailsService.loadUserByUsername(email)
+
+            val authentication = UsernamePasswordAuthenticationToken(
+                userDetails, null, userDetails.authorities
+            ).apply {
+                details = WebAuthenticationDetailsSource().buildDetails(request)
+            }
+
+            SecurityContextHolder.getContext().authentication = authentication
+            Unit.right()
+        } catch (e: Exception) {
+            JwtFailure.InvalidToken(jwt).left()
         }
     }
 }

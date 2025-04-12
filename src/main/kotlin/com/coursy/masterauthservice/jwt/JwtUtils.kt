@@ -27,7 +27,7 @@ class JwtUtils(
             .verify(token)
             .subject
 
-    override fun validateJwtToken(authToken: String): Boolean =
+    override fun isJwtTokenValid(authToken: String): Boolean =
         runCatching {
             JWT.require(Algorithm.HMAC256(jwtSecret)).build().verify(authToken)
             true
