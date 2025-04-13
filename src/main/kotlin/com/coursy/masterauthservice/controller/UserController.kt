@@ -5,10 +5,7 @@ import com.coursy.masterauthservice.dto.RegistrationRequest
 import com.coursy.masterauthservice.service.UserService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
 
 @RequestMapping("/user")
 @RestController
@@ -23,6 +20,16 @@ class UserController(
         return result.fold(
             { failure -> httpFailureResolver.handleFailure(failure) },
             { ResponseEntity.status(HttpStatus.CREATED).build() }
+        )
+    }
+
+    @DeleteMapping("/{id}")
+    fun deleteUser(@PathVariable id: Long): ResponseEntity<Any> {
+        val result = userService.removeUser(id)
+
+        return result.fold(
+            { failure -> httpFailureResolver.handleFailure(failure) },
+            { ResponseEntity.status(HttpStatus.NO_CONTENT).build() }
         )
     }
 

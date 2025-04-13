@@ -11,10 +11,12 @@ import com.coursy.masterauthservice.model.Role
 import com.coursy.masterauthservice.model.User
 import com.coursy.masterauthservice.repository.RoleRepository
 import com.coursy.masterauthservice.repository.UserRepository
+import jakarta.transaction.Transactional
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 
 @Service
+@Transactional
 class UserService(
     private val userRepository: UserRepository,
     private val roleRepository: RoleRepository,
@@ -31,6 +33,15 @@ class UserService(
 
         val user = createUser(request, role)
         userRepository.save(user)
+        return Unit.right()
+    }
+
+    fun removeUser(id: Long): Either<Failure, Unit> {
+        if (!userRepository.existsById(id)) {
+            return UserFailure.IdNotExists.left()
+        }
+
+        userRepository.removeUserById(id)
         return Unit.right()
     }
 

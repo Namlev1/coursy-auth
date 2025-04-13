@@ -109,5 +109,34 @@ class UserServiceTest : DescribeSpec({
                 verify { roleRepository.findByName(roleName) }
             }
         }
+        describe("removeUser") {
+            it("should remove user successfully") {
+                // given
+                val userId = 1L
+                every { userRepository.existsById(userId) } returns true
+                every { userRepository.removeUserById(userId) } returns Unit
+
+                // when
+                val result = userService.removeUser(userId)
+
+                // then
+                result.shouldBeRight()
+                verify { userRepository.existsById(userId) }
+                verify { userRepository.removeUserById(userId) }
+            }
+
+            it("should return IdNotExists failure when user doesn't exist") {
+                // given
+                val nonExistentId = 99L
+                every { userRepository.existsById(nonExistentId) } returns false
+
+                // when
+                val result = userService.removeUser(nonExistentId)
+
+                // then
+                result.shouldBeLeft().shouldBeInstanceOf<UserFailure.IdNotExists>()
+                verify { userRepository.existsById(nonExistentId) }
+            }
+        }
     }
 })

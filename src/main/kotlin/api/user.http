@@ -5,7 +5,6 @@
     const email = $random.email
     client.global.set("email", email)
     request.variables.set("email", email)
-    console.log(email)
 %}
 POST {{url}}
 Content-Type: application/json
@@ -54,3 +53,6 @@ Content-Type: application/json
   "password": "pa$$w0RD",
   "roleName": "ROLE_SUPER_ADMIN"
 }
+
+### DELETE user by ID
+DELETE {{url}}/1
