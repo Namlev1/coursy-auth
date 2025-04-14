@@ -11,6 +11,7 @@ data class UserResponse(
     val firstName: Name,
     val lastName: Name,
     val companyName: CompanyName?,
+    val roleName: String,
 )
 
 fun User.toUserResponse(): UserResponse {
@@ -19,6 +20,7 @@ fun User.toUserResponse(): UserResponse {
         email = this.email,
         firstName = this.firstName,
         lastName = this.lastName,
-        companyName = this.companyName
+        companyName = this.companyName,
+        roleName = this.role.name.name
     )
 } 

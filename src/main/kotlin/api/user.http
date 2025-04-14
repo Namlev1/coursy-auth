@@ -57,5 +57,17 @@ Content-Type: application/json
 ### GET user by ID
 GET {{url}}/3
 
+### UPDATE user by ID with data in body
+PUT {{url}}/3
+Content-Type: application/json
+
+{
+  "firstName": "{{$random.address.firstName}}",
+  "lastName": "{{$random.address.lastName}}",
+  "email": "{{$random.email}}",
+  "companyName": "{{$random.company.name}}",
+  "roleName": "ROLE_SUPER_ADMIN"
+}
+
 ### DELETE user by ID
 DELETE {{url}}/1

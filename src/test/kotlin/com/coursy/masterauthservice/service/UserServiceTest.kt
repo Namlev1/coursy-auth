@@ -1,6 +1,7 @@
 package com.coursy.masterauthservice.service
 
 import com.coursy.masterauthservice.dto.RegistrationRequest
+import com.coursy.masterauthservice.dto.UserUpdateRequest
 import com.coursy.masterauthservice.failure.RoleFailure
 import com.coursy.masterauthservice.failure.UserFailure
 import com.coursy.masterauthservice.model.Role
@@ -29,14 +30,14 @@ class UserServiceTest : DescribeSpec({
     val passwordEncoder = mockk<PasswordEncoder>()
     val userService = UserService(userRepository, roleRepository, passwordEncoder)
 
-    val firstName = Name.create("John").getOrNull()!!
-    val lastName = Name.create("Doe").getOrNull()!!
+    var firstName = Name.create("John").getOrNull()!!
+    var lastName = Name.create("Doe").getOrNull()!!
     val email = Email.create("test@example.com").getOrNull()!!
     val password = Password.create("Password123!").getOrNull()!!
-    val companyName = CompanyName.create("Test Company").getOrNull()!!
+    var companyName = CompanyName.create("Test Company").getOrNull()!!
     val encryptedPassword = "encrypted_password"
     val roleName = RoleName.ROLE_USER
-    val role = Role(
+    var role = Role(
         id = 1L,
         name = roleName
     )
@@ -185,5 +186,109 @@ class UserServiceTest : DescribeSpec({
                 verify { userRepository.findById(nonExistentId) }
             }
         }
+        describe("updateUser") {
+            val userId = 1L
+            val adminRoleName = RoleName.ROLE_ADMIN
+            val adminRole = Role(id = 2L, name = adminRoleName)
+            val updatedFirstName = Name.create("Jane").getOrNull()!!
+            val updatedLastName = Name.create("Smith").getOrNull()!!
+            val updatedCompanyName = CompanyName.create("New Company").getOrNull()!!
+            val user = User(
+                id = userId,
+                firstName = firstName,
+                lastName = lastName,
+                email = email,
+                password = encryptedPassword,
+                companyName = companyName,
+                role = role
+            )
+            val updatedRequest = RegistrationRequest.Validated(
+                firstName = updatedFirstName,
+                lastName = updatedLastName,
+                email = email,
+                password = password,
+                companyName = updatedCompanyName,
+                roleName = adminRoleName
+            )
+
+            it("should update user successfully") {
+                // given
+                val updateRequest = UserUpdateRequest.Validated(
+                    firstName = updatedFirstName,
+                    lastName = updatedLastName,
+                    companyName = updatedCompanyName,
+                    roleName = adminRoleName
+                )
+                every { userRepository.findById(userId) } returns Optional.of(user)
+                every { roleRepository.findByName(adminRoleName) } returns adminRole
+                every { userRepository.save(any()) } returns user.apply {
+                    firstName = updatedFirstName
+                    lastName = updatedLastName
+                    companyName = updatedCompanyName
+                    role = adminRole
+                }
+
+                // when
+                val result = userService.updateUser(userId, updateRequest)
+
+                // then
+                val response = result.shouldBeRight()
+                response.firstName shouldBe updatedFirstName
+                response.lastName shouldBe updatedLastName
+                response.companyName shouldBe updatedCompanyName
+                response.roleName shouldBe adminRoleName.name
+
+                verify { userRepository.findById(userId) }
+                verify { roleRepository.findByName(adminRoleName) }
+                verify {
+                    userRepository.save(match { updatedUser ->
+                        updatedUser.id == userId &&
+                                updatedUser.firstName == updatedFirstName &&
+                                updatedUser.lastName == updatedLastName &&
+                                updatedUser.companyName == updatedCompanyName &&
+                                updatedUser.role == adminRole
+                    })
+                }
+            }
+
+            it("should return IdNotExists failure when user doesn't exist") {
+                // given
+                val nonExistentId = 99L
+                val updateRequest = UserUpdateRequest.Validated(
+                    firstName = updatedFirstName,
+                    lastName = null,
+                    companyName = null,
+                    roleName = null
+                )
+                every { userRepository.findById(nonExistentId) } returns Optional.empty()
+
+                // when
+                val result = userService.updateUser(nonExistentId, updateRequest)
+
+                // then
+                result.shouldBeLeft().shouldBeInstanceOf<UserFailure.IdNotExists>()
+                verify { userRepository.findById(nonExistentId) }
+            }
+
+            it("should return RoleNotFound failure when role doesn't exist") {
+                // given
+                val updateRequest = UserUpdateRequest.Validated(
+                    firstName = null,
+                    lastName = null,
+                    companyName = null,
+                    roleName = RoleName.ROLE_SUPER_ADMIN
+                )
+                every { userRepository.findById(userId) } returns Optional.of(user)
+                every { roleRepository.findByName(RoleName.ROLE_SUPER_ADMIN) } returns null
+
+                // when
+                val result = userService.updateUser(userId, updateRequest)
+
+                // then
+                result.shouldBeLeft().shouldBeInstanceOf<RoleFailure.NotFound>()
+                verify { userRepository.findById(userId) }
+                verify { roleRepository.findByName(RoleName.ROLE_SUPER_ADMIN) }
+            }
+        } 
     }
 })

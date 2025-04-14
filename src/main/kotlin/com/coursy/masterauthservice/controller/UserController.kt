@@ -2,6 +2,7 @@ package com.coursy.masterauthservice.controller
 
 import arrow.core.flatMap
 import com.coursy.masterauthservice.dto.RegistrationRequest
+import com.coursy.masterauthservice.dto.UserUpdateRequest
 import com.coursy.masterauthservice.service.UserService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -32,6 +33,16 @@ class UserController(
                 { response -> ResponseEntity.status(HttpStatus.OK).body(response) }
             )
     }
+
+    @PutMapping("/{id}")
+    fun updateUser(@PathVariable id: Long, @RequestBody request: UserUpdateRequest): ResponseEntity<Any> {
+        val result = request.validate().flatMap { validated -> userService.updateUser(id, validated) }
+
+        return result.fold(
+            { failure -> httpFailureResolver.handleFailure(failure) },
+            { response -> ResponseEntity.status(HttpStatus.OK).body(response) }
+        )
+    } 
 
     @DeleteMapping("/{id}")
     fun deleteUser(@PathVariable id: Long): ResponseEntity<Any> {

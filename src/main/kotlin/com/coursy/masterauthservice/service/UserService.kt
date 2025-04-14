@@ -5,6 +5,7 @@ import arrow.core.left
 import arrow.core.right
 import com.coursy.masterauthservice.dto.RegistrationRequest
 import com.coursy.masterauthservice.dto.UserResponse
+import com.coursy.masterauthservice.dto.UserUpdateRequest
 import com.coursy.masterauthservice.dto.toUserResponse
 import com.coursy.masterauthservice.failure.Failure
 import com.coursy.masterauthservice.failure.RoleFailure
@@ -53,6 +54,30 @@ class UserService(
             .map { it.toUserResponse().right() }
             .getOrElse { UserFailure.IdNotExists.left() }
     }
+
+    fun updateUser(userId: Long, request: UserUpdateRequest.Validated): Either<Failure, UserResponse> {
+        val userOption = userRepository.findById(userId)
+
+        if (userOption.isEmpty) {
+            return UserFailure.IdNotExists.left()
+        }
+
+        val user = userOption.get()
+
+        if (request.roleName != null) {
+            val role = roleRepository.findByName(request.roleName)
+                ?: return RoleFailure.NotFound.left()
+            user.role = role
+        }
+
+        request.firstName?.let { user.firstName = it }
+        request.lastName?.let { user.lastName = it }
+        request.companyName?.let { user.companyName = it }
+
+        return userRepository.save(user).toUserResponse().right()
+    }
+
+    // todo update password method
 
     private fun createUser(request: RegistrationRequest.Validated, role: Role): User {
         val encryptedPassword = passwordEncoder.encode(request.password.value)
