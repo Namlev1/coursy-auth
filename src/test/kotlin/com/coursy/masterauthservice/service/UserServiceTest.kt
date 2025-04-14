@@ -25,270 +25,326 @@ import org.springframework.security.crypto.password.PasswordEncoder
 import java.util.*
 
 class UserServiceTest : DescribeSpec({
-    val userRepository = mockk<UserRepository>()
-    val roleRepository = mockk<RoleRepository>()
-    val passwordEncoder = mockk<PasswordEncoder>()
-    val userService = UserService(userRepository, roleRepository, passwordEncoder)
 
-    var firstName = Name.create("John").getOrNull()!!
-    var lastName = Name.create("Doe").getOrNull()!!
-    val email = Email.create("test@example.com").getOrNull()!!
-    val password = Password.create("Password123!").getOrNull()!!
-    var companyName = CompanyName.create("Test Company").getOrNull()!!
-    val encryptedPassword = "encrypted_password"
-    val roleName = RoleName.ROLE_USER
-    var role = Role(
-        id = 1L,
-        name = roleName
-    )
+    class TestFixtures {
+        // Common values
+        val userId = 1L
+        val nonExistentId = 99L
+        val encryptedPassword = "encrypted_password"
 
-    val validRequest = RegistrationRequest.Validated(
-        firstName = firstName,
-        lastName = lastName,
-        email = email,
-        password = password,
-        companyName = companyName,
-        roleName = roleName
-    )
+        // User data
+        val firstName = Name.create("John").getOrNull()!!
+        val lastName = Name.create("Doe").getOrNull()!!
+        val email = Email.create("test@example.com").getOrNull()!!
+        val password = Password.create("Password123!").getOrNull()!!
+        val companyName = CompanyName.create("Test Company").getOrNull()!!
 
-    describe("UserService") {
+        // Updated user data
+        val updatedFirstName = Name.create("Jane").getOrNull()!!
+        val updatedLastName = Name.create("Smith").getOrNull()!!
+        val updatedCompanyName = CompanyName.create("New Company").getOrNull()!!
 
-        describe("createUser") {
-            it("should create a user successfully") {
-                // given
-                every { userRepository.existsByEmail(email) } returns false
-                every { roleRepository.findByName(roleName) } returns role
-                every { passwordEncoder.encode(password.value) } returns encryptedPassword
-                every { userRepository.save(any()) } answers {
-                    firstArg<User>().apply { id = 1L }
-                }
+        // Roles
+        val userRoleName = RoleName.ROLE_USER
+        val userRole = Role(id = 1L, name = userRoleName)
 
-                // when
-                val result = userService.createUser(validRequest)
+        val adminRoleName = RoleName.ROLE_ADMIN
+        val adminRole = Role(id = 2L, name = adminRoleName)
 
-                // then
-                result.shouldBeRight()
+        val superAdminRoleName = RoleName.ROLE_SUPER_ADMIN
 
-                verify { userRepository.existsByEmail(email) }
-                verify { roleRepository.findByName(roleName) }
-                verify { passwordEncoder.encode(password.value) }
-                verify {
-                    userRepository.save(match {
-                        it.email == email &&
-                                it.password == encryptedPassword &&
-                                it.firstName == firstName &&
-                                it.lastName == lastName &&
-                                it.companyName == companyName &&
-                                it.role == role
-                    })
-                }
-            }
-
-            it("should return EmailAlreadyExists failure when email exists") {
-                // given
-                every { userRepository.existsByEmail(email) } returns true
-
-                // when
-                val result = userService.createUser(validRequest)
-
-                // then
-                result.shouldBeLeft().shouldBeInstanceOf<UserFailure.EmailAlreadyExists>()
-
-                verify { userRepository.existsByEmail(email) }
-            }
-
-            it("should return RoleNotFound failure when role doesn't exist") {
-                // given
-                every { userRepository.existsByEmail(email) } returns false
-                every { roleRepository.findByName(roleName) } returns null
-
-                // when
-                val result = userService.createUser(validRequest)
-
-                // then
-                result.shouldBeLeft().shouldBeInstanceOf<RoleFailure.NotFound>()
-
-                verify { userRepository.existsByEmail(email) }
-                verify { roleRepository.findByName(roleName) }
-            }
-        }
-        describe("removeUser") {
-            it("should remove user successfully") {
-                // given
-                val userId = 1L
-                every { userRepository.existsById(userId) } returns true
-                every { userRepository.removeUserById(userId) } returns Unit
-
-                // when
-                val result = userService.removeUser(userId)
-
-                // then
-                result.shouldBeRight()
-                verify { userRepository.existsById(userId) }
-                verify { userRepository.removeUserById(userId) }
-            }
-
-            it("should return IdNotExists failure when user doesn't exist") {
-                // given
-                val nonExistentId = 99L
-                every { userRepository.existsById(nonExistentId) } returns false
-
-                // when
-                val result = userService.removeUser(nonExistentId)
-
-                // then
-                result.shouldBeLeft().shouldBeInstanceOf<UserFailure.IdNotExists>()
-                verify { userRepository.existsById(nonExistentId) }
-            }
-        }
-        describe("getUser") {
-            it("should retrieve user successfully") {
-                // given
-                val userId = 1L
-                val user = User(
-                    id = userId,
-                    firstName = firstName,
-                    lastName = lastName,
-                    email = email,
-                    password = encryptedPassword,
-                    companyName = companyName,
-                    role = role
-                )
-
-                every { userRepository.findById(userId) } returns Optional.of(user)
-
-                // when
-                val result = userService.getUser(userId)
-
-                // then
-                val right = result.shouldBeRight()
-                right.apply {
-                    this.id shouldBe userId
-                    this.email shouldBe email
-                    this.firstName shouldBe firstName
-                    this.lastName shouldBe lastName
-                    this.companyName shouldBe companyName
-                }
-
-                verify { userRepository.findById(userId) }
-            }
-
-            it("should return IdNotExists failure when user doesn't exist") {
-                // given
-                val nonExistentId = 99L
-                every { userRepository.findById(nonExistentId) } returns Optional.empty()
-
-                // when
-                val result = userService.getUser(nonExistentId)
-
-                // then
-                result.shouldBeLeft().shouldBeInstanceOf<UserFailure.IdNotExists>()
-                verify { userRepository.findById(nonExistentId) }
-            }
-        }
-        describe("updateUser") {
-            val userId = 1L
-            val adminRoleName = RoleName.ROLE_ADMIN
-            val adminRole = Role(id = 2L, name = adminRoleName)
-            val updatedFirstName = Name.create("Jane").getOrNull()!!
-            val updatedLastName = Name.create("Smith").getOrNull()!!
-            val updatedCompanyName = CompanyName.create("New Company").getOrNull()!!
-            val user = User(
-                id = userId,
+        // Request objects
+        val validRegistrationRequest by lazy {
+            RegistrationRequest.Validated(
                 firstName = firstName,
                 lastName = lastName,
                 email = email,
-                password = encryptedPassword,
+                password = password,
                 companyName = companyName,
-                role = role
+                roleName = userRoleName
             )
-            val updatedRequest = RegistrationRequest.Validated(
+        }
+
+        val fullUpdateRequest by lazy {
+            UserUpdateRequest.Validated(
                 firstName = updatedFirstName,
                 lastName = updatedLastName,
-                email = email,
-                password = password,
                 companyName = updatedCompanyName,
                 roleName = adminRoleName
             )
+        }
 
-            it("should update user successfully") {
-                // given
-                val updateRequest = UserUpdateRequest.Validated(
-                    firstName = updatedFirstName,
-                    lastName = updatedLastName,
-                    companyName = updatedCompanyName,
-                    roleName = adminRoleName
-                )
-                every { userRepository.findById(userId) } returns Optional.of(user)
-                every { roleRepository.findByName(adminRoleName) } returns adminRole
-                every { userRepository.save(any()) } returns user.apply {
-                    firstName = updatedFirstName
-                    lastName = updatedLastName
-                    companyName = updatedCompanyName
-                    role = adminRole
+        val partialUpdateRequest by lazy {
+            UserUpdateRequest.Validated(
+                firstName = updatedFirstName,
+                lastName = null,
+                companyName = null,
+                roleName = null
+            )
+        }
+
+        val roleOnlyUpdateRequest by lazy {
+            UserUpdateRequest.Validated(
+                firstName = null,
+                lastName = null,
+                companyName = null,
+                roleName = superAdminRoleName
+            )
+        }
+
+        // User object
+        fun createUser(
+            id: Long = userId,
+            firstName: Name = this.firstName,
+            lastName: Name = this.lastName,
+            email: Email = this.email,
+            password: String = encryptedPassword,
+            companyName: CompanyName = this.companyName,
+            role: Role = userRole
+        ) = User(
+            id = id,
+            firstName = firstName,
+            lastName = lastName,
+            email = email,
+            password = password,
+            companyName = companyName,
+            role = role
+        )
+    }
+
+    // Mocks
+    val userRepository = mockk<UserRepository>()
+    val roleRepository = mockk<RoleRepository>()
+    val passwordEncoder = mockk<PasswordEncoder>()
+
+    // System under test
+    val userService = UserService(userRepository, roleRepository, passwordEncoder)
+
+    val fixtures = TestFixtures()
+
+    describe("UserService") {
+
+        describe("User Creation") {
+            context("when creating a user with valid data") {
+                it("should create a user successfully") {
+                    // given
+                    val request = fixtures.validRegistrationRequest
+
+                    every { userRepository.existsByEmail(fixtures.email) } returns false
+                    every { roleRepository.findByName(fixtures.userRoleName) } returns fixtures.userRole
+                    every { passwordEncoder.encode(fixtures.password.value) } returns fixtures.encryptedPassword
+                    every { userRepository.save(any()) } answers {
+                        firstArg<User>().apply { id = fixtures.userId }
+                    }
+
+                    // when
+                    val result = userService.createUser(request)
+
+                    // then
+                    result.shouldBeRight()
+
+                    verify { userRepository.existsByEmail(fixtures.email) }
+                    verify { roleRepository.findByName(fixtures.userRoleName) }
+                    verify { passwordEncoder.encode(fixtures.password.value) }
+                    verify {
+                        userRepository.save(match {
+                            it.email == fixtures.email &&
+                                    it.password == fixtures.encryptedPassword &&
+                                    it.firstName == fixtures.firstName &&
+                                    it.lastName == fixtures.lastName &&
+                                    it.companyName == fixtures.companyName &&
+                                    it.role == fixtures.userRole
+                        })
+                    }
                 }
+            }
 
-                // when
-                val result = userService.updateUser(userId, updateRequest)
+            context("when email already exists") {
+                it("should return EmailAlreadyExists failure") {
+                    // given
+                    val request = fixtures.validRegistrationRequest
+                    every { userRepository.existsByEmail(fixtures.email) } returns true
 
-                // then
-                val response = result.shouldBeRight()
-                response.firstName shouldBe updatedFirstName
-                response.lastName shouldBe updatedLastName
-                response.companyName shouldBe updatedCompanyName
-                response.roleName shouldBe adminRoleName.name
+                    // when
+                    val result = userService.createUser(request)
 
-                verify { userRepository.findById(userId) }
-                verify { roleRepository.findByName(adminRoleName) }
-                verify {
-                    userRepository.save(match { updatedUser ->
-                        updatedUser.id == userId &&
-                                updatedUser.firstName == updatedFirstName &&
-                                updatedUser.lastName == updatedLastName &&
-                                updatedUser.companyName == updatedCompanyName &&
-                                updatedUser.role == adminRole
-                    })
+                    // then
+                    result.shouldBeLeft().shouldBeInstanceOf<UserFailure.EmailAlreadyExists>()
+                    verify { userRepository.existsByEmail(fixtures.email) }
                 }
             }
 
-            it("should return IdNotExists failure when user doesn't exist") {
-                // given
-                val nonExistentId = 99L
-                val updateRequest = UserUpdateRequest.Validated(
-                    firstName = updatedFirstName,
-                    lastName = null,
-                    companyName = null,
-                    roleName = null
-                )
-                every { userRepository.findById(nonExistentId) } returns Optional.empty()
+            context("when role doesn't exist") {
+                it("should return RoleNotFound failure") {
+                    // given
+                    val request = fixtures.validRegistrationRequest
+                    every { userRepository.existsByEmail(fixtures.email) } returns false
+                    every { roleRepository.findByName(fixtures.userRoleName) } returns null
 
-                // when
-                val result = userService.updateUser(nonExistentId, updateRequest)
+                    // when
+                    val result = userService.createUser(request)
 
-                // then
-                result.shouldBeLeft().shouldBeInstanceOf<UserFailure.IdNotExists>()
-                verify { userRepository.findById(nonExistentId) }
+                    // then
+                    result.shouldBeLeft().shouldBeInstanceOf<RoleFailure.NotFound>()
+                    verify { userRepository.existsByEmail(fixtures.email) }
+                    verify { roleRepository.findByName(fixtures.userRoleName) }
+                }
+            }
+        }
+
+        describe("User Removal") {
+            context("when removing an existing user") {
+                it("should remove user successfully") {
+                    // given
+                    val userId = fixtures.userId
+                    every { userRepository.existsById(userId) } returns true
+                    every { userRepository.removeUserById(userId) } returns Unit
+
+                    // when
+                    val result = userService.removeUser(userId)
+
+                    // then
+                    result.shouldBeRight()
+                    verify { userRepository.existsById(userId) }
+                    verify { userRepository.removeUserById(userId) }
+                }
             }
 
-            it("should return RoleNotFound failure when role doesn't exist") {
-                // given
-                val updateRequest = UserUpdateRequest.Validated(
-                    firstName = null,
-                    lastName = null,
-                    companyName = null,
-                    roleName = RoleName.ROLE_SUPER_ADMIN
-                )
-                every { userRepository.findById(userId) } returns Optional.of(user)
-                every { roleRepository.findByName(RoleName.ROLE_SUPER_ADMIN) } returns null
+            context("when removing a non-existent user") {
+                it("should return IdNotExists failure") {
+                    // given
+                    val nonExistentId = fixtures.nonExistentId
+                    every { userRepository.existsById(nonExistentId) } returns false
 
-                // when
-                val result = userService.updateUser(userId, updateRequest)
+                    // when
+                    val result = userService.removeUser(nonExistentId)
 
-                // then
-                result.shouldBeLeft().shouldBeInstanceOf<RoleFailure.NotFound>()
-                verify { userRepository.findById(userId) }
-                verify { roleRepository.findByName(RoleName.ROLE_SUPER_ADMIN) }
+                    // then
+                    result.shouldBeLeft().shouldBeInstanceOf<UserFailure.IdNotExists>()
+                    verify { userRepository.existsById(nonExistentId) }
+                }
             }
-        } 
+        }
+
+        describe("User Retrieval") {
+            context("when retrieving an existing user") {
+                it("should retrieve user successfully") {
+                    // given
+                    val userId = fixtures.userId
+                    val user = fixtures.createUser()
+
+                    every { userRepository.findById(userId) } returns Optional.of(user)
+
+                    // when
+                    val result = userService.getUser(userId)
+
+                    // then
+                    val right = result.shouldBeRight()
+                    right.apply {
+                        this.id shouldBe userId
+                        this.email shouldBe fixtures.email
+                        this.firstName shouldBe fixtures.firstName
+                        this.lastName shouldBe fixtures.lastName
+                        this.companyName shouldBe fixtures.companyName
+                    }
+
+                    verify { userRepository.findById(userId) }
+                }
+            }
+
+            context("when retrieving a non-existent user") {
+                it("should return IdNotExists failure") {
+                    // given
+                    val nonExistentId = fixtures.nonExistentId
+                    every { userRepository.findById(nonExistentId) } returns Optional.empty()
+
+                    // when
+                    val result = userService.getUser(nonExistentId)
+
+                    // then
+                    result.shouldBeLeft().shouldBeInstanceOf<UserFailure.IdNotExists>()
+                    verify { userRepository.findById(nonExistentId) }
+                }
+            }
+        }
+
+        describe("User Update") {
+            context("when updating all user fields") {
+                it("should update user successfully") {
+                    // given
+                    val userId = fixtures.userId
+                    val updateRequest = fixtures.fullUpdateRequest
+                    val user = fixtures.createUser()
+
+                    every { userRepository.findById(userId) } returns Optional.of(user)
+                    every { roleRepository.findByName(fixtures.adminRoleName) } returns fixtures.adminRole
+                    every { userRepository.save(any()) } returns user.apply {
+                        firstName = fixtures.updatedFirstName
+                        lastName = fixtures.updatedLastName
+                        companyName = fixtures.updatedCompanyName
+                        role = fixtures.adminRole
+                    }
+
+                    // when
+                    val result = userService.updateUser(userId, updateRequest)
+
+                    // then
+                    val response = result.shouldBeRight()
+                    response.firstName shouldBe fixtures.updatedFirstName
+                    response.lastName shouldBe fixtures.updatedLastName
+                    response.companyName shouldBe fixtures.updatedCompanyName
+                    response.roleName shouldBe fixtures.adminRoleName.name
+
+                    verify { userRepository.findById(userId) }
+                    verify { roleRepository.findByName(fixtures.adminRoleName) }
+                    verify {
+                        userRepository.save(match { updatedUser ->
+                            updatedUser.id == userId &&
+                                    updatedUser.firstName == fixtures.updatedFirstName &&
+                                    updatedUser.lastName == fixtures.updatedLastName &&
+                                    updatedUser.companyName == fixtures.updatedCompanyName &&
+                                    updatedUser.role == fixtures.adminRole
+                        })
+                    }
+                }
+            }
+
+            context("when user doesn't exist") {
+                it("should return IdNotExists failure") {
+                    // given
+                    val nonExistentId = fixtures.nonExistentId
+                    val updateRequest = fixtures.partialUpdateRequest
+
+                    every { userRepository.findById(nonExistentId) } returns Optional.empty()
+
+                    // when
+                    val result = userService.updateUser(nonExistentId, updateRequest)
+
+                    // then
+                    result.shouldBeLeft().shouldBeInstanceOf<UserFailure.IdNotExists>()
+                    verify { userRepository.findById(nonExistentId) }
+                }
+            }
+
+            context("when role doesn't exist") {
+                it("should return RoleNotFound failure") {
+                    // given
+                    val userId = fixtures.userId
+                    val updateRequest = fixtures.roleOnlyUpdateRequest
+                    val user = fixtures.createUser()
+
+                    every { userRepository.findById(userId) } returns Optional.of(user)
+                    every { roleRepository.findByName(fixtures.superAdminRoleName) } returns null
+
+                    // when
+                    val result = userService.updateUser(userId, updateRequest)
+
+                    // then
+                    result.shouldBeLeft().shouldBeInstanceOf<RoleFailure.NotFound>()
+                    verify { userRepository.findById(userId) }
+                    verify { roleRepository.findByName(fixtures.superAdminRoleName) }
+                }
+            }
+        }
     }
 })
