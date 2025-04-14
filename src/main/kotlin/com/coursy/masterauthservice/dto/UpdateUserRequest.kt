@@ -14,7 +14,7 @@ data class UserUpdateRequest(
     val lastName: String?,
     val companyName: String?,
     val roleName: String?
-) {
+) : SelfValidating<Failure, UserUpdateRequest.Validated> {
     data class Validated(
         val firstName: Name?,
         val lastName: Name?,
@@ -22,7 +22,7 @@ data class UserUpdateRequest(
         val roleName: RoleName?
     )
 
-    fun validate(): Either<Failure, Validated> {
+    override fun validate(): Either<Failure, Validated> {
         val firstNameResult = firstName?.let { Name.create(it) }
         val lastNameResult = lastName?.let { Name.create(it) }
         val companyNameResult = companyName?.let { CompanyName.create(it) }
