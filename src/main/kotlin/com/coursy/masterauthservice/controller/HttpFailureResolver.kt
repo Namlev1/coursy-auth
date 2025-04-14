@@ -7,7 +7,6 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Service
 
-// todo rename
 @Service
 class HttpFailureResolver {
     fun handleFailure(failure: Failure): ResponseEntity<Any> =
