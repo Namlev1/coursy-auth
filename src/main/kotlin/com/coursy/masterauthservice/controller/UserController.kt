@@ -23,14 +23,24 @@ class UserController(
         )
     }
 
+    @GetMapping("/{id}")
+    fun getUser(@PathVariable id: Long): ResponseEntity<Any> {
+        return userService
+            .getUser(id)
+            .fold(
+                { failure -> httpFailureResolver.handleFailure(failure) },
+                { response -> ResponseEntity.status(HttpStatus.OK).body(response) }
+            )
+    }
+
     @DeleteMapping("/{id}")
     fun deleteUser(@PathVariable id: Long): ResponseEntity<Any> {
-        val result = userService.removeUser(id)
-
-        return result.fold(
-            { failure -> httpFailureResolver.handleFailure(failure) },
-            { ResponseEntity.status(HttpStatus.NO_CONTENT).build() }
-        )
+        return userService
+            .removeUser(id)
+            .fold(
+                { failure -> httpFailureResolver.handleFailure(failure) },
+                { ResponseEntity.status(HttpStatus.NO_CONTENT).build() }
+            )
     }
 
 }

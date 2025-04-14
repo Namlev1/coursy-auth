@@ -54,5 +54,8 @@ Content-Type: application/json
   "roleName": "ROLE_SUPER_ADMIN"
 }
 
+### GET user by ID
+GET {{url}}/3
+
 ### DELETE user by ID
 DELETE {{url}}/1

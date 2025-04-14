@@ -4,6 +4,8 @@ import arrow.core.Either
 import arrow.core.left
 import arrow.core.right
 import com.coursy.masterauthservice.dto.RegistrationRequest
+import com.coursy.masterauthservice.dto.UserResponse
+import com.coursy.masterauthservice.dto.toUserResponse
 import com.coursy.masterauthservice.failure.Failure
 import com.coursy.masterauthservice.failure.RoleFailure
 import com.coursy.masterauthservice.failure.UserFailure
@@ -14,6 +16,7 @@ import com.coursy.masterauthservice.repository.UserRepository
 import jakarta.transaction.Transactional
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
+import kotlin.jvm.optionals.getOrElse
 
 @Service
 @Transactional
@@ -26,7 +29,7 @@ class UserService(
         if (userRepository.existsByEmail(request.email)) {
             return UserFailure.EmailAlreadyExists.left()
         }
-        
+
         val role =
             roleRepository.findByName(request.roleName)
                 ?: return RoleFailure.NotFound.left()
@@ -43,6 +46,12 @@ class UserService(
 
         userRepository.removeUserById(id)
         return Unit.right()
+    }
+
+    fun getUser(id: Long): Either<Failure, UserResponse> {
+        return userRepository.findById(id)
+            .map { it.toUserResponse().right() }
+            .getOrElse { UserFailure.IdNotExists.left() }
     }
 
     private fun createUser(request: RegistrationRequest.Validated, role: Role): User {

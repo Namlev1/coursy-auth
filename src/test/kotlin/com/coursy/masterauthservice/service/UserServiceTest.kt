@@ -15,11 +15,13 @@ import com.coursy.masterauthservice.type.Password
 import io.kotest.assertions.arrow.core.shouldBeLeft
 import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import org.springframework.security.crypto.password.PasswordEncoder
+import java.util.*
 
 class UserServiceTest : DescribeSpec({
     val userRepository = mockk<UserRepository>()
@@ -136,6 +138,51 @@ class UserServiceTest : DescribeSpec({
                 // then
                 result.shouldBeLeft().shouldBeInstanceOf<UserFailure.IdNotExists>()
                 verify { userRepository.existsById(nonExistentId) }
+            }
+        }
+        describe("getUser") {
+            it("should retrieve user successfully") {
+                // given
+                val userId = 1L
+                val user = User(
+                    id = userId,
+                    firstName = firstName,
+                    lastName = lastName,
+                    email = email,
+                    password = encryptedPassword,
+                    companyName = companyName,
+                    role = role
+                )
+
+                every { userRepository.findById(userId) } returns Optional.of(user)
+
+                // when
+                val result = userService.getUser(userId)
+
+                // then
+                val right = result.shouldBeRight()
+                right.apply {
+                    this.id shouldBe userId
+                    this.email shouldBe email
+                    this.firstName shouldBe firstName
+                    this.lastName shouldBe lastName
+                    this.companyName shouldBe companyName
+                }
+
+                verify { userRepository.findById(userId) }
+            }
+
+            it("should return IdNotExists failure when user doesn't exist") {
+                // given
+                val nonExistentId = 99L
+                every { userRepository.findById(nonExistentId) } returns Optional.empty()
+
+                // when
+                val result = userService.getUser(nonExistentId)
+
+                // then
+                result.shouldBeLeft().shouldBeInstanceOf<UserFailure.IdNotExists>()
+                verify { userRepository.findById(nonExistentId) }
             }
         }
     }
