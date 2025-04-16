@@ -69,5 +69,13 @@ Content-Type: application/json
   "roleName": "ROLE_SUPER_ADMIN"
 }
 
+### UPDATE user password
+PUT {{url}}/33/password
+Content-Type: application/json
+
+{
+  "password": "pa$$w0RD2"
+}
+
 ### DELETE user by ID
 DELETE {{url}}/1
