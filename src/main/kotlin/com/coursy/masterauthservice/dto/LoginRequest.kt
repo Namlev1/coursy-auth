@@ -1,7 +1,6 @@
 package com.coursy.masterauthservice.dto
 
 import arrow.core.Either
-import arrow.core.getOrElse
 import arrow.core.left
 import arrow.core.right
 import com.coursy.masterauthservice.failure.Failure
@@ -18,12 +17,17 @@ data class LoginRequest(
     )
 
     override fun validate(): Either<Failure, Validated> {
-        val email = Email.create(email).getOrElse { return it.left() }
-        val password = Password.create(password).getOrElse { return it.left() }
+        val emailResult = Email.create(email)
+        val passwordResult = Password.create(password)
 
-        return Validated(
-            email = email,
-            password = password
+        val firstError = listOfNotNull(
+            emailResult.leftOrNull(),
+            passwordResult.leftOrNull()
+        ).firstOrNull()
+
+        return firstError?.left() ?: Validated(
+            email = emailResult.getOrNull()!!,
+            password = passwordResult.getOrNull()!!
         ).right()
     }
 }
