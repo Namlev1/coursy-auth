@@ -51,7 +51,7 @@ class UserController(
 
         return result.fold(
             { failure -> httpFailureResolver.handleFailure(failure) },
-            { response -> ResponseEntity.status(HttpStatus.OK).body(response) }
+            { ResponseEntity.status(HttpStatus.OK).build() }
         )
     }
     
