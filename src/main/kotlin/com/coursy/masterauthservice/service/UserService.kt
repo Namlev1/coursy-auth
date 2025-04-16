@@ -3,10 +3,7 @@ package com.coursy.masterauthservice.service
 import arrow.core.Either
 import arrow.core.left
 import arrow.core.right
-import com.coursy.masterauthservice.dto.RegistrationRequest
-import com.coursy.masterauthservice.dto.UserResponse
-import com.coursy.masterauthservice.dto.UserUpdateRequest
-import com.coursy.masterauthservice.dto.toUserResponse
+import com.coursy.masterauthservice.dto.*
 import com.coursy.masterauthservice.failure.Failure
 import com.coursy.masterauthservice.failure.RoleFailure
 import com.coursy.masterauthservice.failure.UserFailure
@@ -77,7 +74,18 @@ class UserService(
         return userRepository.save(user).toUserResponse().right()
     }
 
-    // todo update password method
+    fun updatePassword(userId: Long, request: ChangePasswordRequest.Validated): Either<Failure, Unit> {
+        val userOption = userRepository.findById(userId)
+
+        if (userOption.isEmpty) {
+            return UserFailure.IdNotExists.left()
+        }
+
+        val user = userOption.get()
+        user.password = passwordEncoder.encode(request.password.value)
+        userRepository.save(user)
+        return Unit.right()
+    }
 
     private fun createUser(request: RegistrationRequest.Validated, role: Role): User {
         val encryptedPassword = passwordEncoder.encode(request.password.value)

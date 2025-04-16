@@ -1,6 +1,7 @@
 package com.coursy.masterauthservice.controller
 
 import arrow.core.flatMap
+import com.coursy.masterauthservice.dto.ChangePasswordRequest
 import com.coursy.masterauthservice.dto.RegistrationRequest
 import com.coursy.masterauthservice.dto.UserUpdateRequest
 import com.coursy.masterauthservice.service.UserService
@@ -42,7 +43,18 @@ class UserController(
             { failure -> httpFailureResolver.handleFailure(failure) },
             { response -> ResponseEntity.status(HttpStatus.OK).body(response) }
         )
-    } 
+    }
+
+    @PutMapping("/{id}/password")
+    fun updateUserPassword(@PathVariable id: Long, @RequestBody request: ChangePasswordRequest): ResponseEntity<Any> {
+        val result = request.validate().flatMap { validated -> userService.updatePassword(id, validated) }
+
+        return result.fold(
+            { failure -> httpFailureResolver.handleFailure(failure) },
+            { response -> ResponseEntity.status(HttpStatus.OK).body(response) }
+        )
+    }
+    
 
     @DeleteMapping("/{id}")
     fun deleteUser(@PathVariable id: Long): ResponseEntity<Any> {

@@ -1,5 +1,6 @@
 package com.coursy.masterauthservice.service
 
+import com.coursy.masterauthservice.dto.ChangePasswordRequest
 import com.coursy.masterauthservice.dto.RegistrationRequest
 import com.coursy.masterauthservice.dto.UserUpdateRequest
 import com.coursy.masterauthservice.failure.RoleFailure
@@ -43,6 +44,7 @@ class UserServiceTest : DescribeSpec({
         val updatedFirstName = Name.create("Jane").getOrNull()!!
         val updatedLastName = Name.create("Smith").getOrNull()!!
         val updatedCompanyName = CompanyName.create("New Company").getOrNull()!!
+        val updatedPassword = Password.create("pa\$\$w0RD").getOrNull()!!
 
         // Roles
         val userRoleName = RoleName.ROLE_USER
@@ -89,6 +91,12 @@ class UserServiceTest : DescribeSpec({
                 lastName = null,
                 companyName = null,
                 roleName = superAdminRoleName
+            )
+        }
+
+        val updatePasswordRequest by lazy {
+            ChangePasswordRequest.Validated(
+                password = updatedPassword
             )
         }
 
@@ -344,6 +352,45 @@ class UserServiceTest : DescribeSpec({
                     verify { userRepository.findById(userId) }
                     verify { roleRepository.findByName(fixtures.superAdminRoleName) }
                 }
+            }
+
+            context("when updating user password") {
+                it("should update user password successfully") {
+                    // given
+                    val userId = fixtures.userId
+                    val request = fixtures.updatePasswordRequest
+                    val user = fixtures.createUser()
+
+                    every { userRepository.findById(userId) } returns Optional.of(user)
+                    every { passwordEncoder.encode(any()) } returns fixtures.encryptedPassword
+                    every { userRepository.save(any()) } returns user.apply {
+                        password = fixtures.encryptedPassword
+                    }
+
+                    // when
+                    val result = userService.updatePassword(userId, request)
+
+                    // then
+                    result.shouldBeRight()
+                    verify { userRepository.findById(userId) }
+
+                }
+
+                it("should return Password failure") {
+                    // given
+                    val userId = fixtures.userId
+                    val request = fixtures.updatePasswordRequest
+
+                    every { userRepository.findById(userId) } returns Optional.empty()
+                   
+                    // when
+                    val result = userService.updatePassword(userId, request)
+
+                    // then
+                    result.shouldBeLeft()
+                        .shouldBeInstanceOf<UserFailure>()
+                }
+
             }
         }
     }
