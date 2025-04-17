@@ -21,6 +21,9 @@ class JwtUtils(
     override fun generateJwtToken(authentication: Authentication): String =
         (authentication.principal as UserDetailsImp).let { generateJwt(it.email.value, it.authorities) }
 
+    override fun generateJwtToken(userDetailsImp: UserDetailsImp): String =
+        generateJwt(userDetailsImp.email.value, userDetailsImp.authorities)
+    
     override fun getUserEmailFromJwtToken(token: String): String =
         JWT.require(Algorithm.HMAC256(jwtSecret))
             .build()

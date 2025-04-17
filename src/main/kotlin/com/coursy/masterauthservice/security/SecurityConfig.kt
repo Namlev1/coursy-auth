@@ -37,6 +37,7 @@ class SecurityConfig(
             .authorizeHttpRequests {
                 it.requestMatchers("/v1/user/**").permitAll()
                     .requestMatchers("/v1/auth/login").permitAll()
+                    .requestMatchers("/v1/auth/refresh").permitAll()
                     .anyRequest().authenticated()
             }
 

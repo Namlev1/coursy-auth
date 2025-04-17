@@ -2,6 +2,7 @@ package com.coursy.masterauthservice.controller
 
 import arrow.core.flatMap
 import com.coursy.masterauthservice.dto.LoginRequest
+import com.coursy.masterauthservice.dto.RefreshJwtRequest
 import com.coursy.masterauthservice.service.AuthService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -27,4 +28,15 @@ class AuthController(
     fun authorizedEndpoint() = ResponseEntity
         .status(HttpStatus.OK)
         .body("You passed the authorization flow!")
+
+    @GetMapping("/refresh")
+    fun refreshJwt(@RequestBody request: RefreshJwtRequest): ResponseEntity<Any> {
+        val result = request.validate().flatMap { validated -> authService.refreshJwtToken(validated) }
+
+        return result.fold(
+            { failure -> httpFailureResolver.handleFailure(failure) },
+            { jwtResponse -> ResponseEntity.status(HttpStatus.OK).body(jwtResponse) }
+        )
+    }
+    
 }

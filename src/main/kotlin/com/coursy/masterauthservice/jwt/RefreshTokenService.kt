@@ -3,6 +3,7 @@ package com.coursy.masterauthservice.jwt
 import arrow.core.Either
 import arrow.core.left
 import arrow.core.right
+import com.coursy.masterauthservice.failure.RefreshTokenFailure
 import com.coursy.masterauthservice.failure.UserFailure
 import com.coursy.masterauthservice.model.RefreshToken
 import com.coursy.masterauthservice.repository.RefreshTokenRepository
@@ -33,5 +34,18 @@ class RefreshTokenService(
         )
 
         return refreshTokenRepository.save(refreshToken).right()
+    }
+
+    fun findByToken(token: String) =
+        refreshTokenRepository.findByToken(token)
+            ?.right() ?: RefreshTokenFailure.NotFound.left()
+
+    fun verifyExpiration(token: RefreshToken): Either<RefreshTokenFailure, RefreshToken> {
+        return if (token.expiryDate.isBefore(Instant.now())) {
+            refreshTokenRepository.delete(token)
+            RefreshTokenFailure.Expired.left()
+        } else {
+            token.right()
+        }
     }
 }

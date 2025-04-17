@@ -1,6 +1,7 @@
 package com.coursy.masterauthservice.controller
 
 import com.coursy.masterauthservice.failure.Failure
+import com.coursy.masterauthservice.failure.RefreshTokenFailure
 import com.coursy.masterauthservice.failure.RoleFailure
 import com.coursy.masterauthservice.failure.UserFailure
 import org.springframework.http.HttpStatus
@@ -14,6 +15,9 @@ class HttpFailureResolver {
             is UserFailure.EmailAlreadyExists -> ResponseEntity.status(HttpStatus.CONFLICT).body(failure.message())
             is UserFailure.IdNotExists -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(failure.message())
             is RoleFailure.NotFound -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(failure.message())
+            is RefreshTokenFailure.Empty -> ResponseEntity.status(HttpStatus.BAD_REQUEST).body(failure.message())
+            is RefreshTokenFailure.NotFound -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(failure.message())
+            is RefreshTokenFailure.Expired -> ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(failure.message())
             else -> ResponseEntity.status(HttpStatus.BAD_REQUEST).body(failure.message())
         }
 }

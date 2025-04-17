@@ -5,12 +5,14 @@ import arrow.core.left
 import arrow.core.right
 import com.coursy.masterauthservice.dto.JwtResponse
 import com.coursy.masterauthservice.dto.LoginRequest
+import com.coursy.masterauthservice.dto.RefreshJwtRequest
 import com.coursy.masterauthservice.failure.AuthenticationFailure
 import com.coursy.masterauthservice.failure.Failure
 import com.coursy.masterauthservice.jwt.JwtTokenService
 import com.coursy.masterauthservice.jwt.RefreshTokenService
 import com.coursy.masterauthservice.repository.UserRepository
 import com.coursy.masterauthservice.security.UserDetailsImp
+import com.coursy.masterauthservice.security.toUserDetails
 import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.context.SecurityContextHolder
@@ -51,6 +53,27 @@ class AuthService(
         return JwtResponse(
             token = jwt,
             refreshToken = refreshToken
+        ).right()
+    }
+
+    // TODO Refactor this method
+    //  Please correct failure type if applicable.
+    fun refreshJwtToken(refreshRequest: RefreshJwtRequest.Validated): Either<Failure, JwtResponse> {
+        val refreshToken = refreshTokenService.findByToken(refreshRequest.refreshToken)
+            .fold(
+                { return it.left() },
+                { token -> token }
+            )
+
+        refreshTokenService.verifyExpiration(refreshToken)
+            .onLeft { return it.left() }
+
+        val userDetailsImp = refreshToken.user.toUserDetails()
+        val jwt = jwtTokenService.generateJwtToken(userDetailsImp)
+
+        return JwtResponse(
+            token = jwt,
+            refreshToken = refreshToken.token
         ).right()
     }
 }
