@@ -1,6 +1,7 @@
 package com.coursy.masterauthservice.service
 
 import arrow.core.Either
+import arrow.core.getOrElse
 import arrow.core.left
 import arrow.core.right
 import com.coursy.masterauthservice.dto.JwtResponse
@@ -8,6 +9,7 @@ import com.coursy.masterauthservice.dto.LoginRequest
 import com.coursy.masterauthservice.dto.RefreshJwtRequest
 import com.coursy.masterauthservice.failure.AuthenticationFailure
 import com.coursy.masterauthservice.failure.Failure
+import com.coursy.masterauthservice.failure.RefreshTokenFailure
 import com.coursy.masterauthservice.jwt.JwtTokenService
 import com.coursy.masterauthservice.jwt.RefreshTokenService
 import com.coursy.masterauthservice.repository.UserRepository
@@ -44,11 +46,7 @@ class AuthService(
                 { token -> token.token }
             )
 
-        // Update last login
-        val user = userRepository.findById(userDetails.id).get()
-        user.lastLogin = Instant.now()
-        user.failedAttempts = 0
-        userRepository.save(user)
+        updateLastLogin(userDetails)
 
         return JwtResponse(
             token = jwt,
@@ -56,24 +54,26 @@ class AuthService(
         ).right()
     }
 
-    // TODO Refactor this method
-    //  Please correct failure type if applicable.
-    fun refreshJwtToken(refreshRequest: RefreshJwtRequest.Validated): Either<Failure, JwtResponse> {
+    fun refreshJwtToken(refreshRequest: RefreshJwtRequest.Validated): Either<RefreshTokenFailure, JwtResponse> {
         val refreshToken = refreshTokenService.findByToken(refreshRequest.refreshToken)
-            .fold(
-                { return it.left() },
-                { token -> token }
-            )
+            .getOrElse { failure -> return failure.left() }
 
         refreshTokenService.verifyExpiration(refreshToken)
-            .onLeft { return it.left() }
+            .onLeft { failure -> return failure.left() }
 
-        val userDetailsImp = refreshToken.user.toUserDetails()
-        val jwt = jwtTokenService.generateJwtToken(userDetailsImp)
+        val userDetails = refreshToken.user.toUserDetails()
+        val newJwt = jwtTokenService.generateJwtToken(userDetails)
 
         return JwtResponse(
-            token = jwt,
+            token = newJwt,
             refreshToken = refreshToken.token
         ).right()
+    }
+
+    private fun updateLastLogin(userDetails: UserDetailsImp) {
+        val user = userRepository.findById(userDetails.id).get()
+        user.lastLogin = Instant.now()
+        user.failedAttempts = 0
+        userRepository.save(user)
     }
 }
