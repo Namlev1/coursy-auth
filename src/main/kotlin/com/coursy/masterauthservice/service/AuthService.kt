@@ -6,7 +6,9 @@ import arrow.core.right
 import com.coursy.masterauthservice.dto.JwtResponse
 import com.coursy.masterauthservice.dto.LoginRequest
 import com.coursy.masterauthservice.failure.AuthenticationFailure
+import com.coursy.masterauthservice.failure.Failure
 import com.coursy.masterauthservice.jwt.JwtTokenService
+import com.coursy.masterauthservice.jwt.RefreshTokenService
 import com.coursy.masterauthservice.repository.UserRepository
 import com.coursy.masterauthservice.security.UserDetailsImp
 import org.springframework.security.authentication.AuthenticationManager
@@ -19,9 +21,10 @@ import java.time.Instant
 class AuthService(
     private val userRepository: UserRepository,
     private val authenticationManager: AuthenticationManager,
-    private val jwtTokenService: JwtTokenService
+    private val jwtTokenService: JwtTokenService,
+    private val refreshTokenService: RefreshTokenService
 ) {
-    fun authenticateUser(loginRequest: LoginRequest.Validated): Either<AuthenticationFailure, JwtResponse> {
+    fun authenticateUser(loginRequest: LoginRequest.Validated): Either<Failure, JwtResponse> {
         val authentication = runCatching {
             authenticationManager.authenticate(
                 UsernamePasswordAuthenticationToken(loginRequest.email.value, loginRequest.password.value)
@@ -32,10 +35,12 @@ class AuthService(
         val jwt = jwtTokenService.generateJwtToken(authentication)
 
         val userDetails = authentication.principal as UserDetailsImp
-        val role = userDetails.authorities.first().toString()
 
-        // TODO
-//        val refreshToken = refreshTokenService.createRefreshToken(userDetails.id)
+        val refreshToken = refreshTokenService.createRefreshToken(userDetails.id)
+            .fold(
+                { failure -> return failure.left() },
+                { token -> token.token }
+            )
 
         // Update last login
         val user = userRepository.findById(userDetails.id).get()
@@ -45,7 +50,7 @@ class AuthService(
 
         return JwtResponse(
             token = jwt,
-//            refreshToken = refreshToken.token,
+            refreshToken = refreshToken
         ).right()
     }
 }
