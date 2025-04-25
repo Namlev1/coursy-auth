@@ -38,7 +38,7 @@ class SecurityConfig(
                 it
                     .requestMatchers(
                         "/v1/auth/**",
-                        "/v1/user/"
+                        "/v1/user"
                     ).permitAll()
                     .requestMatchers("/v1/user/admin/**").hasAuthority(RoleName.ROLE_ADMIN.toString())
                     .requestMatchers("/v1/user/super-admin/**").hasAuthority(RoleName.ROLE_SUPER_ADMIN.toString())
@@ -53,7 +53,7 @@ class SecurityConfig(
     @Bean
     fun authenticationProvider(): DaoAuthenticationProvider {
         val authProvider = DaoAuthenticationProvider()
-        authProvider.setUserDetailsService(userDetailsService)
+        authProvider.userDetailsService = userDetailsService
         authProvider.setPasswordEncoder(passwordEncoder())
         return authProvider
     }

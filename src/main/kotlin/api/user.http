@@ -79,3 +79,12 @@ Content-Type: application/json
 
 ### DELETE user by ID
 DELETE {{url}}/1
+
+### GET current user data
+# @no-cookie-jar
+< {%
+    const token = client.global.get("token")
+    request.variables.set("token", token)
+%}
+GET {{url}}/me
+Authorization: Bearer {{token}}

@@ -4,9 +4,11 @@ import arrow.core.flatMap
 import com.coursy.masterauthservice.dto.ChangePasswordRequest
 import com.coursy.masterauthservice.dto.RegistrationRequest
 import com.coursy.masterauthservice.dto.UserUpdateRequest
+import com.coursy.masterauthservice.security.UserDetailsImp
 import com.coursy.masterauthservice.service.UserService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.*
 
 @RequestMapping("/user")
@@ -15,6 +17,16 @@ class UserController(
     private val userService: UserService,
     private val httpFailureResolver: HttpFailureResolver
 ) {
+    @GetMapping("/me")
+    fun getCurrentUser(@AuthenticationPrincipal currentUser: UserDetailsImp): ResponseEntity<Any> {
+        return userService
+            .getUser(currentUser.id)
+            .fold(
+                { failure -> httpFailureResolver.handleFailure(failure) },
+                { response -> ResponseEntity.status(HttpStatus.OK).body(response) }
+            )
+    }
+
     @PostMapping
     fun createUser(@RequestBody request: RegistrationRequest): ResponseEntity<Any> {
         val result = request.validate().flatMap { validated -> userService.createUser(validated) }
@@ -54,7 +66,7 @@ class UserController(
             { ResponseEntity.status(HttpStatus.OK).build() }
         )
     }
-    
+
 
     @DeleteMapping("/{id}")
     fun deleteUser(@PathVariable id: Long): ResponseEntity<Any> {
