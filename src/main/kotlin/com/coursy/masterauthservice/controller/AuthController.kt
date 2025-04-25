@@ -24,11 +24,6 @@ class AuthController(
         )
     }
 
-    @GetMapping("/secret")
-    fun authorizedEndpoint() = ResponseEntity
-        .status(HttpStatus.OK)
-        .body("You passed the authorization flow!")
-
     @GetMapping("/refresh")
     fun refreshJwt(@RequestBody request: RefreshJwtRequest): ResponseEntity<Any> {
         val result = request.validate().flatMap { validated -> authService.refreshJwtToken(validated) }
