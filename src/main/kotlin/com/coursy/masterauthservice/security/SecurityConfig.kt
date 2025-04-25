@@ -1,5 +1,6 @@
 package com.coursy.masterauthservice.security
 
+import com.coursy.masterauthservice.model.RoleName
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.security.authentication.AuthenticationManager
@@ -15,7 +16,6 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 @Configuration
 @EnableWebSecurity
-//@EnableMethodSecurity
 class SecurityConfig(
     private val userDetailsService: UserDetailsServiceImp,
     private val jwtTokenFilter: JwtTokenFilter
@@ -35,9 +35,13 @@ class SecurityConfig(
         http.csrf { it.disable() }
             .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
             .authorizeHttpRequests {
-                it.requestMatchers("/v1/user/**").permitAll()
-                    .requestMatchers("/v1/auth/login").permitAll()
-                    .requestMatchers("/v1/auth/refresh").permitAll()
+                it
+                    .requestMatchers(
+                        "/v1/auth/**",
+                        "/v1/user/"
+                    ).permitAll()
+                    .requestMatchers("/v1/user/admin/**").hasAuthority(RoleName.ROLE_ADMIN.toString())
+                    .requestMatchers("/v1/user/super-admin/**").hasAuthority(RoleName.ROLE_SUPER_ADMIN.toString())
                     .anyRequest().authenticated()
             }
 
