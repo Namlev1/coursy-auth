@@ -3,6 +3,7 @@ package com.coursy.masterauthservice.service
 import com.coursy.masterauthservice.dto.ChangePasswordRequest
 import com.coursy.masterauthservice.dto.RegistrationRequest
 import com.coursy.masterauthservice.dto.UserUpdateRequest
+import com.coursy.masterauthservice.failure.AuthorizationFailure
 import com.coursy.masterauthservice.failure.RoleFailure
 import com.coursy.masterauthservice.failure.UserFailure
 import com.coursy.masterauthservice.model.Role
@@ -19,9 +20,7 @@ import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
-import io.mockk.every
-import io.mockk.mockk
-import io.mockk.verify
+import io.mockk.*
 import org.springframework.security.crypto.password.PasswordEncoder
 import java.util.*
 
@@ -223,7 +222,7 @@ class UserServiceTest : DescribeSpec({
                 it("should return IdNotExists failure") {
                     // given
                     val nonExistentId = fixtures.nonExistentId
-                    every { userRepository.findById(nonExistentId) } returns Optional.empty<User>()
+                    every { userRepository.findById(nonExistentId) } returns Optional.empty()
 
                     // when
                     val result = userService.removeUser(nonExistentId, true)
@@ -231,6 +230,38 @@ class UserServiceTest : DescribeSpec({
                     // then
                     result.shouldBeLeft().shouldBeInstanceOf<UserFailure.IdNotExists>()
                     verify { userRepository.findById(nonExistentId) }
+                }
+            }
+
+            context("when removing ADMIN") {
+                it("should remove user successfully") {
+                    // given
+                    val userId = fixtures.nonExistentId
+                    val admin = fixtures.createUser(role = fixtures.adminRole)
+                    every { userRepository.findById(userId) } returns Optional.of(admin)
+                    every { userRepository.removeUserById(userId) } just runs
+
+                    // when
+                    val result = userService.removeUser(userId, false)
+
+                    // then
+                    result.shouldBeRight()
+                    verify { userRepository.findById(userId) }
+                    verify { userRepository.removeUserById(userId) }
+                }
+
+                it("should return IdNotExists failure") {
+                    // given
+                    val userId = fixtures.nonExistentId
+                    val admin = fixtures.createUser(role = fixtures.adminRole)
+                    every { userRepository.findById(userId) } returns Optional.of(admin)
+
+                    // when
+                    val result = userService.removeUser(userId, true)
+
+                    // then
+                    result.shouldBeLeft().shouldBeInstanceOf<AuthorizationFailure.InsufficientRole>()
+                    verify { userRepository.findById(userId) }
                 }
             }
         }
