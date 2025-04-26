@@ -85,8 +85,39 @@ Content-Type: application/json
   "roleName": "ROLE_SUPER_ADMIN"
 }
 
-### UPDATE user password
-PUT {{url}}/33/password
+### UPDATE current user password
+< {%
+    const token = client.global.get("token")
+    request.variables.set("token", token)
+%}
+PUT {{url}}/me/password
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "password": "pa$$w0RD"
+}
+
+### UPDATE user password by ID (ADMIN)
+< {%
+    const token = client.global.get("token")
+    request.variables.set("token", token)
+%}
+PUT {{url}}/admin/9/password
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "password": "pa$$w0RD2"
+}
+
+### UPDATE user password by ID (SUPER_ADMIN)
+< {%
+    const token = client.global.get("token")
+    request.variables.set("token", token)
+%}
+PUT {{url}}/super-admin/9/password
+Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {

@@ -424,6 +424,58 @@ class UserServiceTest : DescribeSpec({
                 }
 
             }
+
+            context("when updating admin password") {
+                it("should update password successfully") {
+                    // given
+                    val adminId = fixtures.userId
+                    val request = fixtures.updatePasswordRequest
+                    val admin = fixtures.createUser(role = fixtures.adminRole)
+
+                    every { userRepository.findById(adminId) } returns Optional.of(admin)
+                    every { passwordEncoder.encode(any()) } returns fixtures.encryptedPassword
+                    every { userRepository.save(any()) } returns admin.apply {
+                        password = fixtures.encryptedPassword
+                    }
+
+                    // when
+                    val result = userService.updatePassword(
+                        userId = adminId,
+                        request = request,
+                        isRegularUser = false
+                    )
+
+                    // then
+                    result.shouldBeRight()
+                    verify { userRepository.findById(adminId) }
+                }
+
+                it("should return InsufficientRole Failure") {
+                    // given
+                    val adminId = fixtures.userId
+                    val request = fixtures.updatePasswordRequest
+                    val admin = fixtures.createUser(role = fixtures.adminRole)
+
+                    every { userRepository.findById(adminId) } returns Optional.of(admin)
+                    every { passwordEncoder.encode(any()) } returns fixtures.encryptedPassword
+                    every { userRepository.save(any()) } returns admin.apply {
+                        password = fixtures.encryptedPassword
+                    }
+
+                    // when
+                    val result = userService.updatePassword(
+                        userId = adminId,
+                        request = request,
+                        isRegularUser = true
+                    )
+
+                    // then
+                    result.shouldBeLeft()
+                        .shouldBeInstanceOf<AuthorizationFailure.InsufficientRole>()
+                    verify { userRepository.findById(adminId) }
+                }
+
+            }
         }
     }
 })

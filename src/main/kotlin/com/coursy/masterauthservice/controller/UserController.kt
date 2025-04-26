@@ -30,6 +30,23 @@ class UserController(
             )
     }
 
+    @PutMapping("/me/password")
+    fun updateCurrentUserPassword(
+        @AuthenticationPrincipal currentUser: UserDetailsImp,
+        @RequestBody request: ChangePasswordRequest
+    ): ResponseEntity<Any> {
+        val result = request
+            .validate()
+            .flatMap { validated ->
+                userService.updatePassword(currentUser.id, validated)
+            }
+
+        return result.fold(
+            { failure -> httpFailureResolver.handleFailure(failure) },
+            { ResponseEntity.status(HttpStatus.OK).build() }
+        )
+    }
+
     @PostMapping
     fun createRegularUser(@RequestBody request: RegistrationRequest): ResponseEntity<Any> {
         val result = request
@@ -94,10 +111,34 @@ class UserController(
         )
     }
 
-    // todo a lot of authorization
-    @PutMapping("/{id}/password")
+    @PutMapping("/admin/{id}/password")
+    fun updateRegularUserPassword(
+        @PathVariable id: Long,
+        @RequestBody request: ChangePasswordRequest
+    ): ResponseEntity<Any> {
+        val result = request
+            .validate()
+            .flatMap { validated ->
+                userService.updatePassword(id, validated)
+            }
+
+        return result.fold(
+            { failure -> httpFailureResolver.handleFailure(failure) },
+            { ResponseEntity.status(HttpStatus.OK).build() }
+        )
+    }
+
+    @PutMapping("/super-admin/{id}/password")
     fun updateUserPassword(@PathVariable id: Long, @RequestBody request: ChangePasswordRequest): ResponseEntity<Any> {
-        val result = request.validate().flatMap { validated -> userService.updatePassword(id, validated) }
+        val result = request
+            .validate()
+            .flatMap { validated ->
+                userService.updatePassword(
+                    userId = id,
+                    request = validated,
+                    isRegularUser = false
+                )
+            }
 
         return result.fold(
             { failure -> httpFailureResolver.handleFailure(failure) },

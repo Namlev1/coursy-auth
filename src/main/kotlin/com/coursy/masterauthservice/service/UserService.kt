@@ -44,7 +44,7 @@ class UserService(
             .findById(id)
             .getOrElse { return UserFailure.IdNotExists.left() }
             .let {
-                if (isRegularUser && it.role.name != RoleName.ROLE_USER)
+                if (isOperationForbidden(isRegularUser, it))
                     return AuthorizationFailure.InsufficientRole.left()
             }
 
@@ -80,14 +80,18 @@ class UserService(
         return userRepository.save(user).toUserResponse().right()
     }
 
-    fun updatePassword(userId: Long, request: ChangePasswordRequest.Validated): Either<Failure, Unit> {
-        val userOption = userRepository.findById(userId)
+    fun updatePassword(
+        userId: Long,
+        request: ChangePasswordRequest.Validated,
+        isRegularUser: Boolean = true
+    ): Either<Failure, Unit> {
+        val user = userRepository
+            .findById(userId)
+            .getOrElse { return UserFailure.IdNotExists.left() }
 
-        if (userOption.isEmpty) {
-            return UserFailure.IdNotExists.left()
-        }
+        if (isOperationForbidden(isRegularUser, user))
+            return AuthorizationFailure.InsufficientRole.left()
 
-        val user = userOption.get()
         user.password = passwordEncoder.encode(request.password.value)
         userRepository.save(user)
         return Unit.right()
@@ -104,5 +108,8 @@ class UserService(
             role = role
         )
     }
+
+    private fun isOperationForbidden(isRegularUser: Boolean, user: User) =
+        isRegularUser && user.role.name != RoleName.ROLE_USER
 
 }
