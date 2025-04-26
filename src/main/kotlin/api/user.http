@@ -31,19 +31,35 @@ Content-Type: application/json
 }
 
 ### POST new random ADMIN
-POST {{url}}
+< {%
+    const email = $random.email
+    client.global.set("email", email)
+    request.variables.set("email", email)
+    const token = client.global.get("token")
+    request.variables.set("token", token)
+%}
+POST {{url}}/admin
+Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
   "firstName": "{{$random.address.firstName}}",
   "lastName": "{{$random.address.lastName}}",
-  "email": "{{$random.email}}",
+  "email": "{{email}}",
   "password": "pa$$w0RD",
   "roleName": "ROLE_ADMIN"
 }
 
-### POST new random SUPER ADMIN
+### POST new random SUPER ADMIN (TODO CORRECT)
+< {%
+    const email = $random.email
+    client.global.set("email", email)
+    request.variables.set("email", email)
+    const token = client.global.get("token")
+    request.variables.set("token", token)
+%}
 POST {{url}}
+Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {

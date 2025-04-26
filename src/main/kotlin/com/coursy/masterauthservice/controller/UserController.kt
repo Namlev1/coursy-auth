@@ -4,10 +4,12 @@ import arrow.core.flatMap
 import com.coursy.masterauthservice.dto.ChangePasswordRequest
 import com.coursy.masterauthservice.dto.RegistrationRequest
 import com.coursy.masterauthservice.dto.UserUpdateRequest
+import com.coursy.masterauthservice.model.RoleName
 import com.coursy.masterauthservice.security.UserDetailsImp
 import com.coursy.masterauthservice.service.UserService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.*
 
@@ -28,8 +30,24 @@ class UserController(
     }
 
     @PostMapping
+    fun createRegularUser(@RequestBody request: RegistrationRequest): ResponseEntity<Any> {
+        val result = request
+            .validate()
+            .map { validated -> validated.copy(roleName = RoleName.ROLE_USER) }
+            .flatMap { validated -> userService.createUser(validated) }
+
+        return result.fold(
+            { failure -> httpFailureResolver.handleFailure(failure) },
+            { ResponseEntity.status(HttpStatus.CREATED).build() }
+        )
+    }
+
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
+    @PostMapping("/admin")
     fun createUser(@RequestBody request: RegistrationRequest): ResponseEntity<Any> {
-        val result = request.validate().flatMap { validated -> userService.createUser(validated) }
+        val result = request
+            .validate()
+            .flatMap { validated -> userService.createUser(validated) }
 
         return result.fold(
             { failure -> httpFailureResolver.handleFailure(failure) },
