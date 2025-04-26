@@ -15,6 +15,7 @@ import com.coursy.masterauthservice.jwt.RefreshTokenService
 import com.coursy.masterauthservice.repository.UserRepository
 import com.coursy.masterauthservice.security.UserDetailsImp
 import com.coursy.masterauthservice.security.toUserDetails
+import jakarta.transaction.Transactional
 import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.context.SecurityContextHolder
@@ -22,6 +23,7 @@ import org.springframework.stereotype.Service
 import java.time.Instant
 
 @Service
+@Transactional
 class AuthService(
     private val userRepository: UserRepository,
     private val authenticationManager: AuthenticationManager,
