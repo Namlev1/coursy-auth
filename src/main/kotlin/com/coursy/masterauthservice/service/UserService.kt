@@ -4,10 +4,12 @@ import arrow.core.Either
 import arrow.core.left
 import arrow.core.right
 import com.coursy.masterauthservice.dto.*
+import com.coursy.masterauthservice.failure.AuthorizationFailure
 import com.coursy.masterauthservice.failure.Failure
 import com.coursy.masterauthservice.failure.RoleFailure
 import com.coursy.masterauthservice.failure.UserFailure
 import com.coursy.masterauthservice.model.Role
+import com.coursy.masterauthservice.model.RoleName
 import com.coursy.masterauthservice.model.User
 import com.coursy.masterauthservice.repository.RoleRepository
 import com.coursy.masterauthservice.repository.UserRepository
@@ -37,10 +39,14 @@ class UserService(
         return Unit.right()
     }
 
-    fun removeUser(id: Long): Either<Failure, Unit> {
-        if (!userRepository.existsById(id)) {
-            return UserFailure.IdNotExists.left()
-        }
+    fun removeUser(id: Long, isRegularUser: Boolean): Either<Failure, Unit> {
+        userRepository
+            .findById(id)
+            .getOrElse { return UserFailure.IdNotExists.left() }
+            .let {
+                if (isRegularUser && it.role.name != RoleName.ROLE_USER)
+                    return AuthorizationFailure.InsufficientRole.left()
+            }
 
         userRepository.removeUserById(id)
         return Unit.right()

@@ -73,7 +73,7 @@ class UserController(
         )
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("admin/{id}")
     fun getUser(@PathVariable id: Long): ResponseEntity<Any> {
         return userService
             .getUser(id)
@@ -83,6 +83,7 @@ class UserController(
             )
     }
 
+    // todo a lot of authorization
     @PutMapping("/{id}")
     fun updateUser(@PathVariable id: Long, @RequestBody request: UserUpdateRequest): ResponseEntity<Any> {
         val result = request.validate().flatMap { validated -> userService.updateUser(id, validated) }
@@ -93,6 +94,7 @@ class UserController(
         )
     }
 
+    // todo a lot of authorization
     @PutMapping("/{id}/password")
     fun updateUserPassword(@PathVariable id: Long, @RequestBody request: ChangePasswordRequest): ResponseEntity<Any> {
         val result = request.validate().flatMap { validated -> userService.updatePassword(id, validated) }
@@ -104,10 +106,26 @@ class UserController(
     }
 
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/admin/{id}")
+    fun deleteRegularUser(@PathVariable id: Long): ResponseEntity<Any> {
+        return userService
+            .removeUser(
+                id = id,
+                isRegularUser = true
+            )
+            .fold(
+                { failure -> httpFailureResolver.handleFailure(failure) },
+                { ResponseEntity.status(HttpStatus.NO_CONTENT).build() }
+            )
+    }
+
+    @DeleteMapping("/super-admin/{id}")
     fun deleteUser(@PathVariable id: Long): ResponseEntity<Any> {
         return userService
-            .removeUser(id)
+            .removeUser(
+                id = id,
+                isRegularUser = false
+            )
             .fold(
                 { failure -> httpFailureResolver.handleFailure(failure) },
                 { ResponseEntity.status(HttpStatus.NO_CONTENT).build() }

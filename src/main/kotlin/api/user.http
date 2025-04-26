@@ -93,8 +93,21 @@ Content-Type: application/json
   "password": "pa$$w0RD2"
 }
 
-### DELETE user by ID
-DELETE {{url}}/1
+### DELETE user by ID (ADMIN)
+< {%
+    const token = client.global.get("token")
+    request.variables.set("token", token)
+%}
+DELETE {{url}}/admin/16
+Authorization: Bearer {{token}}
+
+### DELETE user by ID (SUPER_ADMIN)
+< {%
+    const token = client.global.get("token")
+    request.variables.set("token", token)
+%}
+DELETE {{url}}/super-admin/16
+Authorization: Bearer {{token}}
 
 ### GET current user data
 # @no-cookie-jar

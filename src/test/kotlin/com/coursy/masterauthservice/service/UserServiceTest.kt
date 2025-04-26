@@ -205,15 +205,16 @@ class UserServiceTest : DescribeSpec({
                 it("should remove user successfully") {
                     // given
                     val userId = fixtures.userId
-                    every { userRepository.existsById(userId) } returns true
+                    val user = fixtures.createUser()
+                    every { userRepository.findById(userId) } returns Optional.of(user)
                     every { userRepository.removeUserById(userId) } returns Unit
 
                     // when
-                    val result = userService.removeUser(userId)
+                    val result = userService.removeUser(userId, true)
 
                     // then
                     result.shouldBeRight()
-                    verify { userRepository.existsById(userId) }
+                    verify { userRepository.findById(userId) }
                     verify { userRepository.removeUserById(userId) }
                 }
             }
@@ -222,14 +223,14 @@ class UserServiceTest : DescribeSpec({
                 it("should return IdNotExists failure") {
                     // given
                     val nonExistentId = fixtures.nonExistentId
-                    every { userRepository.existsById(nonExistentId) } returns false
+                    every { userRepository.findById(nonExistentId) } returns Optional.empty<User>()
 
                     // when
-                    val result = userService.removeUser(nonExistentId)
+                    val result = userService.removeUser(nonExistentId, true)
 
                     // then
                     result.shouldBeLeft().shouldBeInstanceOf<UserFailure.IdNotExists>()
-                    verify { userRepository.existsById(nonExistentId) }
+                    verify { userRepository.findById(nonExistentId) }
                 }
             }
         }
