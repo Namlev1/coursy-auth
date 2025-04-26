@@ -100,10 +100,31 @@ class UserController(
             )
     }
 
-    // todo a lot of authorization
-    @PutMapping("/{id}")
+    @PutMapping("/admin/{id}")
+    fun updateRegularUser(@PathVariable id: Long, @RequestBody request: UserUpdateRequest): ResponseEntity<Any> {
+        val result = request
+            .validate()
+            .flatMap { validated ->
+                userService.updateUser(id, validated)
+            }
+
+        return result.fold(
+            { failure -> httpFailureResolver.handleFailure(failure) },
+            { response -> ResponseEntity.status(HttpStatus.OK).body(response) }
+        )
+    }
+
+    @PutMapping("/super-admin/{id}")
     fun updateUser(@PathVariable id: Long, @RequestBody request: UserUpdateRequest): ResponseEntity<Any> {
-        val result = request.validate().flatMap { validated -> userService.updateUser(id, validated) }
+        val result = request
+            .validate()
+            .flatMap { validated ->
+                userService.updateUser(
+                    id,
+                    validated,
+                    isRegularUser = false,
+                )
+            }
 
         return result.fold(
             { failure -> httpFailureResolver.handleFailure(failure) },

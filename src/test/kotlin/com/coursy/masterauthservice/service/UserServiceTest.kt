@@ -71,7 +71,7 @@ class UserServiceTest : DescribeSpec({
                 firstName = updatedFirstName,
                 lastName = updatedLastName,
                 companyName = updatedCompanyName,
-                roleName = adminRoleName
+                roleName = null
             )
         }
 
@@ -89,7 +89,7 @@ class UserServiceTest : DescribeSpec({
                 firstName = null,
                 lastName = null,
                 companyName = null,
-                roleName = superAdminRoleName
+                roleName = adminRoleName
             )
         }
 
@@ -309,7 +309,7 @@ class UserServiceTest : DescribeSpec({
         }
 
         describe("User Update") {
-            context("when updating all user fields") {
+            context("when updating all user fields except role") {
                 it("should update user successfully") {
                     // given
                     val userId = fixtures.userId
@@ -317,12 +317,10 @@ class UserServiceTest : DescribeSpec({
                     val user = fixtures.createUser()
 
                     every { userRepository.findById(userId) } returns Optional.of(user)
-                    every { roleRepository.findByName(fixtures.adminRoleName) } returns fixtures.adminRole
                     every { userRepository.save(any()) } returns user.apply {
                         firstName = fixtures.updatedFirstName
                         lastName = fixtures.updatedLastName
                         companyName = fixtures.updatedCompanyName
-                        role = fixtures.adminRole
                     }
 
                     // when
@@ -333,20 +331,93 @@ class UserServiceTest : DescribeSpec({
                     response.firstName shouldBe fixtures.updatedFirstName
                     response.lastName shouldBe fixtures.updatedLastName
                     response.companyName shouldBe fixtures.updatedCompanyName
-                    response.roleName shouldBe fixtures.adminRoleName.name
 
                     verify { userRepository.findById(userId) }
-                    verify { roleRepository.findByName(fixtures.adminRoleName) }
                     verify {
                         userRepository.save(match { updatedUser ->
                             updatedUser.id == userId &&
                                     updatedUser.firstName == fixtures.updatedFirstName &&
                                     updatedUser.lastName == fixtures.updatedLastName &&
                                     updatedUser.companyName == fixtures.updatedCompanyName &&
-                                    updatedUser.role == fixtures.adminRole
+                                    updatedUser.role == user.role
                         })
                     }
                 }
+            }
+
+            context("when updating user role") {
+                it("should update role successfully") {
+                    // given
+                    val userId = fixtures.userId
+                    val updateRequest = fixtures.roleOnlyUpdateRequest
+                    val user = fixtures.createUser()
+                    val updateRole = fixtures.adminRole
+
+                    every { userRepository.findById(userId) } returns Optional.of(user)
+                    every { roleRepository.findByName(fixtures.adminRoleName) } returns updateRole
+                    every { userRepository.save(any()) } returns user.apply {
+                        role = updateRole
+                    }
+
+                    // when
+                    val result = userService.updateUser(userId, updateRequest, isRegularUser = false)
+
+                    // then
+                    val response = result.shouldBeRight()
+                    response.roleName shouldBe fixtures.adminRoleName.toString()
+
+                    verify { userRepository.findById(userId) }
+                    verify {
+                        userRepository.save(match { updatedUser ->
+                            updatedUser.id == userId &&
+                                    updatedUser.role == user.role
+                        })
+                    }
+                }
+
+                it("should return InsufficientRole Failure") {
+                    // given
+                    val userId = fixtures.userId
+                    val updateRequest = fixtures.roleOnlyUpdateRequest
+                    val user = fixtures.createUser()
+                    fixtures.adminRole
+
+                    every { userRepository.findById(userId) } returns Optional.of(user)
+//                    every { roleRepository.findByName(fixtures.adminRoleName) } returns updateRole
+//                    every { userRepository.save(any()) } returns user.apply {
+//                        role = updateRole
+//                    }
+
+                    // when
+                    val result = userService.updateUser(userId, updateRequest, isRegularUser = true)
+
+                    // then
+                    result.shouldBeLeft()
+                        .shouldBeInstanceOf<AuthorizationFailure.InsufficientRole>()
+
+                    verify { userRepository.findById(userId) }
+                }
+
+                context("when role doesn't exist") {
+                    it("should return RoleNotFound failure") {
+                        // given
+                        val userId = fixtures.userId
+                        val updateRequest = fixtures.roleOnlyUpdateRequest
+                        val user = fixtures.createUser()
+
+                        every { userRepository.findById(userId) } returns Optional.of(user)
+                        every { roleRepository.findByName(fixtures.adminRoleName) } returns null
+
+                        // when
+                        val result = userService.updateUser(userId, updateRequest, isRegularUser = false)
+
+                        // then
+                        result.shouldBeLeft().shouldBeInstanceOf<RoleFailure.NotFound>()
+                        verify { userRepository.findById(userId) }
+                        verify { roleRepository.findByName(fixtures.adminRoleName) }
+                    }
+                }
+
             }
 
             context("when user doesn't exist") {
@@ -365,27 +436,6 @@ class UserServiceTest : DescribeSpec({
                     verify { userRepository.findById(nonExistentId) }
                 }
             }
-
-            context("when role doesn't exist") {
-                it("should return RoleNotFound failure") {
-                    // given
-                    val userId = fixtures.userId
-                    val updateRequest = fixtures.roleOnlyUpdateRequest
-                    val user = fixtures.createUser()
-
-                    every { userRepository.findById(userId) } returns Optional.of(user)
-                    every { roleRepository.findByName(fixtures.superAdminRoleName) } returns null
-
-                    // when
-                    val result = userService.updateUser(userId, updateRequest)
-
-                    // then
-                    result.shouldBeLeft().shouldBeInstanceOf<RoleFailure.NotFound>()
-                    verify { userRepository.findById(userId) }
-                    verify { roleRepository.findByName(fixtures.superAdminRoleName) }
-                }
-            }
-
             context("when updating user password") {
                 it("should update user password successfully") {
                     // given

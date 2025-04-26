@@ -58,16 +58,20 @@ class UserService(
             .getOrElse { UserFailure.IdNotExists.left() }
     }
 
-    fun updateUser(userId: Long, request: UserUpdateRequest.Validated): Either<Failure, UserResponse> {
-        val userOption = userRepository.findById(userId)
-
-        if (userOption.isEmpty) {
-            return UserFailure.IdNotExists.left()
-        }
-
-        val user = userOption.get()
+    fun updateUser(
+        userId: Long,
+        request: UserUpdateRequest.Validated,
+        isRegularUser: Boolean = true
+    ): Either<Failure, UserResponse> {
+        val user = userRepository
+            .findById(userId)
+            .getOrElse { return UserFailure.IdNotExists.left() }
 
         if (request.roleName != null) {
+            // only super_admins can change roles
+            if (isRegularUser)
+                return AuthorizationFailure.InsufficientRole.left()
+            
             val role = roleRepository.findByName(request.roleName)
                 ?: return RoleFailure.NotFound.left()
             user.role = role
