@@ -45,6 +45,7 @@ class RefreshTokenServiceTest : DescribeSpec({
 
                 every { mockOptional.getOrNull() } returns mockUser
                 every { userRepository.findById(userId) } returns mockOptional
+                every { refreshTokenRepository.flush() } just runs
                 every { refreshTokenRepository.deleteByUser(mockUser) } just runs
                 every {
                     refreshTokenRepository.save(any())
