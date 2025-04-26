@@ -20,6 +20,54 @@ Content-Type: application/json
     client.global.set("refreshToken", refreshToken)
 %}
 
+### LOGIN as USER
+POST {{url}}/login
+Content-Type: application/json
+
+{
+  "email": "7XGKlKUGZCrXG3v@qyxHZ.cn",
+  "password": "pa$$w0RD"
+}
+
+> {%
+    const token = response.body.token
+    const refreshToken = response.body.refreshToken
+    client.global.set("token", token)
+    client.global.set("refreshToken", refreshToken)
+%}
+
+### LOGIN as ADMIN
+POST {{url}}/login
+Content-Type: application/json
+
+{
+  "email": "x16K3iRu3@nXP.cy",
+  "password": "pa$$w0RD"
+}
+
+> {%
+    const token = response.body.token
+    const refreshToken = response.body.refreshToken
+    client.global.set("token", token)
+    client.global.set("refreshToken", refreshToken)
+%}
+
+### LOGIN as SUPER_ADMIN
+POST {{url}}/login
+Content-Type: application/json
+
+{
+  "email": "SAwfPapmh@fxsSOJ.com",
+  "password": "pa$$w0RD"
+}
+
+> {%
+    const token = response.body.token
+    const refreshToken = response.body.refreshToken
+    client.global.set("token", token)
+    client.global.set("refreshToken", refreshToken)
+%}
+
 ### REFRESH JWT token
 < {%
     const refreshToken = client.global.get("refreshToken")

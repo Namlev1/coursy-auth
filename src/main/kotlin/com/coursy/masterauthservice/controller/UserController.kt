@@ -1,15 +1,16 @@
 package com.coursy.masterauthservice.controller
 
 import arrow.core.flatMap
+import arrow.core.left
 import com.coursy.masterauthservice.dto.ChangePasswordRequest
 import com.coursy.masterauthservice.dto.RegistrationRequest
 import com.coursy.masterauthservice.dto.UserUpdateRequest
+import com.coursy.masterauthservice.failure.AuthorizationFailure
 import com.coursy.masterauthservice.model.RoleName
 import com.coursy.masterauthservice.security.UserDetailsImp
 import com.coursy.masterauthservice.service.UserService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.*
 
@@ -42,12 +43,29 @@ class UserController(
         )
     }
 
-    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
     @PostMapping("/admin")
     fun createUser(@RequestBody request: RegistrationRequest): ResponseEntity<Any> {
         val result = request
             .validate()
-            .flatMap { validated -> userService.createUser(validated) }
+            .flatMap { validated ->
+                if (validated.roleName == RoleName.ROLE_SUPER_ADMIN)
+                    AuthorizationFailure.UserSuspended.left()
+                userService.createUser(validated)
+            }
+
+        return result.fold(
+            { failure -> httpFailureResolver.handleFailure(failure) },
+            { ResponseEntity.status(HttpStatus.CREATED).build() }
+        )
+    }
+
+    @PostMapping("/super-admin")
+    fun createSuperUser(@RequestBody request: RegistrationRequest): ResponseEntity<Any> {
+        val result = request
+            .validate()
+            .flatMap { validated ->
+                userService.createUser(validated)
+            }
 
         return result.fold(
             { failure -> httpFailureResolver.handleFailure(failure) },
