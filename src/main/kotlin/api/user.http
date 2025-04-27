@@ -71,10 +71,20 @@ Content-Type: application/json
 }
 
 ### GET user by ID
-GET {{url}}/3
+< {%
+    const token = client.global.get("token")
+    request.variables.set("token", token)
+%}
+GET {{url}}/admin/3
+Authorization: Bearer {{token}}
 
 ### UPDATE user by ID with data in body
-PUT {{url}}/3
+< {%
+    const token = client.global.get("token")
+    request.variables.set("token", token)
+%}
+PUT {{url}}/admin/3
+Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
