@@ -14,6 +14,7 @@ import com.coursy.masterauthservice.model.User
 import com.coursy.masterauthservice.repository.RoleRepository
 import com.coursy.masterauthservice.repository.UserRepository
 import jakarta.transaction.Transactional
+import org.springframework.data.domain.PageRequest
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 import kotlin.jvm.optionals.getOrElse
@@ -58,6 +59,9 @@ class UserService(
             .getOrElse { UserFailure.IdNotExists.left() }
     }
 
+    fun getUserPage(pageRequest: PageRequest) =
+        userRepository.findAll(pageRequest)
+
     fun updateUser(
         userId: Long,
         request: UserUpdateRequest.Validated,
@@ -71,7 +75,7 @@ class UserService(
             // only super_admins can change roles
             if (isRegularUser)
                 return AuthorizationFailure.InsufficientRole.left()
-            
+
             val role = roleRepository.findByName(request.roleName)
                 ?: return RoleFailure.NotFound.left()
             user.role = role

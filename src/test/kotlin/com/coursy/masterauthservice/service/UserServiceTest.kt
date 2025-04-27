@@ -21,6 +21,8 @@ import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import io.mockk.*
+import org.springframework.data.domain.PageImpl
+import org.springframework.data.domain.PageRequest
 import org.springframework.security.crypto.password.PasswordEncoder
 import java.util.*
 
@@ -304,6 +306,27 @@ class UserServiceTest : DescribeSpec({
                     // then
                     result.shouldBeLeft().shouldBeInstanceOf<UserFailure.IdNotExists>()
                     verify { userRepository.findById(nonExistentId) }
+                }
+            }
+
+            context("when retrieving all users") {
+                it("should retrieve user successfully") {
+                    // given
+                    val pageNum = 0
+                    val size = 1
+                    val pageRequest = PageRequest.of(pageNum, size)
+                    val user = fixtures.createUser()
+                    val page = PageImpl(listOf(user), pageRequest, size.toLong())
+
+                    every { userRepository.findAll(pageRequest) } returns page
+
+                    // when
+                    val result = userService.getUserPage(pageRequest)
+
+                    // then
+                    result shouldBe page
+
+                    verify { userRepository.findAll(pageRequest) }
                 }
             }
         }
