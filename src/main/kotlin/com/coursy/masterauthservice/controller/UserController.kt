@@ -30,23 +30,6 @@ class UserController(
             )
     }
 
-    @PutMapping("/me/password")
-    fun updateCurrentUserPassword(
-        @AuthenticationPrincipal currentUser: UserDetailsImp,
-        @RequestBody request: ChangePasswordRequest
-    ): ResponseEntity<Any> {
-        val result = request
-            .validate()
-            .flatMap { validated ->
-                userService.updatePassword(currentUser.id, validated)
-            }
-
-        return result.fold(
-            { failure -> httpFailureResolver.handleFailure(failure) },
-            { ResponseEntity.status(HttpStatus.OK).build() }
-        )
-    }
-
     @PostMapping
     fun createRegularUser(@RequestBody request: RegistrationRequest): ResponseEntity<Any> {
         val result = request
@@ -129,6 +112,23 @@ class UserController(
         return result.fold(
             { failure -> httpFailureResolver.handleFailure(failure) },
             { response -> ResponseEntity.status(HttpStatus.OK).body(response) }
+        )
+    }
+
+    @PutMapping("/me/password")
+    fun updateCurrentUserPassword(
+        @AuthenticationPrincipal currentUser: UserDetailsImp,
+        @RequestBody request: ChangePasswordRequest
+    ): ResponseEntity<Any> {
+        val result = request
+            .validate()
+            .flatMap { validated ->
+                userService.updatePassword(currentUser.id, validated)
+            }
+
+        return result.fold(
+            { failure -> httpFailureResolver.handleFailure(failure) },
+            { ResponseEntity.status(HttpStatus.OK).build() }
         )
     }
 
