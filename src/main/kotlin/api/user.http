@@ -78,6 +78,14 @@ Content-Type: application/json
 GET {{url}}/admin/3
 Authorization: Bearer {{token}}
 
+### GET page of all users
+< {%
+    const token = client.global.get("token")
+    request.variables.set("token", token)
+%}
+GET {{url}}/admin?page=0&size=10
+Authorization: Bearer {{token}}
+
 ### UPDATE user by ID with data in body
 < {%
     const token = client.global.get("token")

@@ -9,6 +9,7 @@ import com.coursy.masterauthservice.failure.AuthorizationFailure
 import com.coursy.masterauthservice.model.RoleName
 import com.coursy.masterauthservice.security.UserDetailsImp
 import com.coursy.masterauthservice.service.UserService
+import org.springframework.data.domain.PageRequest
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
@@ -82,6 +83,18 @@ class UserController(
                 { response -> ResponseEntity.status(HttpStatus.OK).body(response) }
             )
     }
+
+    @GetMapping("admin")
+    fun getAllUsersEndpoint(
+        @RequestParam(defaultValue = "0") page: Int,
+        @RequestParam(defaultValue = "10") size: Int,
+    ): ResponseEntity<Any> =
+        when {
+            arePageParamsInvalid(page, size) -> ResponseEntity.badRequest().build()
+            else -> PageRequest.of(page, size)
+                .let { userService.getUserPage(it) }
+                .let { ResponseEntity.ok(it) }
+        }
 
     @PutMapping("/admin/{id}")
     fun updateRegularUser(@PathVariable id: Long, @RequestBody request: UserUpdateRequest): ResponseEntity<Any> {
@@ -194,4 +207,6 @@ class UserController(
             )
     }
 
+    private fun arePageParamsInvalid(page: Int, size: Int) =
+        page < 0 || size <= 0
 }
