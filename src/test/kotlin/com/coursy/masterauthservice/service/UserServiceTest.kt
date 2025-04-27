@@ -1,8 +1,6 @@
 package com.coursy.masterauthservice.service
 
-import com.coursy.masterauthservice.dto.ChangePasswordRequest
-import com.coursy.masterauthservice.dto.RegistrationRequest
-import com.coursy.masterauthservice.dto.UserUpdateRequest
+import com.coursy.masterauthservice.dto.*
 import com.coursy.masterauthservice.failure.AuthorizationFailure
 import com.coursy.masterauthservice.failure.RoleFailure
 import com.coursy.masterauthservice.failure.UserFailure
@@ -23,6 +21,9 @@ import io.kotest.matchers.types.shouldBeInstanceOf
 import io.mockk.*
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.PageRequest
+import org.springframework.data.web.PagedResourcesAssembler
+import org.springframework.hateoas.EntityModel
+import org.springframework.hateoas.PagedModel
 import org.springframework.security.crypto.password.PasswordEncoder
 import java.util.*
 
@@ -125,9 +126,10 @@ class UserServiceTest : DescribeSpec({
     val userRepository = mockk<UserRepository>()
     val roleRepository = mockk<RoleRepository>()
     val passwordEncoder = mockk<PasswordEncoder>()
+    val pagedResourcesAssembler = mockk<PagedResourcesAssembler<UserResponse>>()
 
     // System under test
-    val userService = UserService(userRepository, roleRepository, passwordEncoder)
+    val userService = UserService(userRepository, roleRepository, passwordEncoder, pagedResourcesAssembler)
 
     val fixtures = TestFixtures()
 
@@ -317,14 +319,19 @@ class UserServiceTest : DescribeSpec({
                     val pageRequest = PageRequest.of(pageNum, size)
                     val user = fixtures.createUser()
                     val page = PageImpl(listOf(user), pageRequest, size.toLong())
+                    val pageModel = PagedModel.of(
+                        page.content.map { EntityModel.of(it.toUserResponse()) },
+                        PagedModel.PageMetadata(page.size.toLong(), page.number.toLong(), page.totalElements)
+                    )
 
                     every { userRepository.findAll(pageRequest) } returns page
+                    every { pagedResourcesAssembler.toModel(any()) } returns pageModel
 
                     // when
                     val result = userService.getUserPage(pageRequest)
 
                     // then
-                    result shouldBe page
+                    result shouldBe pageModel
 
                     verify { userRepository.findAll(pageRequest) }
                 }

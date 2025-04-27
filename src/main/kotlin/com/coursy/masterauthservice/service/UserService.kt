@@ -15,6 +15,7 @@ import com.coursy.masterauthservice.repository.RoleRepository
 import com.coursy.masterauthservice.repository.UserRepository
 import jakarta.transaction.Transactional
 import org.springframework.data.domain.PageRequest
+import org.springframework.data.web.PagedResourcesAssembler
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 import kotlin.jvm.optionals.getOrElse
@@ -25,6 +26,7 @@ class UserService(
     private val userRepository: UserRepository,
     private val roleRepository: RoleRepository,
     private val passwordEncoder: PasswordEncoder,
+    private val pagedResourcesAssembler: PagedResourcesAssembler<UserResponse>
 ) {
     fun createUser(request: RegistrationRequest.Validated): Either<Failure, Unit> {
         if (userRepository.existsByEmail(request.email)) {
@@ -61,6 +63,8 @@ class UserService(
 
     fun getUserPage(pageRequest: PageRequest) =
         userRepository.findAll(pageRequest)
+            .map { it.toUserResponse() }
+            .let { pagedResourcesAssembler.toModel(it) }
 
     fun updateUser(
         userId: Long,
