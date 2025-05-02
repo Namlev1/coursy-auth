@@ -21,41 +21,78 @@ import org.springframework.transaction.annotation.Transactional
 class UserControllerTest(
     private val mockMvc: MockMvc,
     private val mapper: ObjectMapper,
-    private val userRepo: UserRepository
+    private val userRepo: UserRepository,
+    private val userController: UserController
 ) : DescribeSpec({
     val url = "/v1/user"
 
     describe("User registration") {
-        context("When registering regular user with correct data") {
-            it("should save the user") {
-                // given
-                val registrationRequest = RegistrationRequest(
-                    firstName = "Jan",
-                    lastName = "Kowalski",
-                    email = "jan.kowalski@example.com",
-                    password = "SecurePassword123!",
-                    companyName = null,
-                    roleName = null
-                )
+        context("When registering regular user") {
+            context("with correct data") {
+                it("should save the user") {
+                    // given
+                    val registrationRequest = RegistrationRequest(
+                        firstName = "Jan",
+                        lastName = "Kowalski",
+                        email = "jan.kowalski@example.com",
+                        password = "SecurePassword123!",
+                        companyName = null,
+                        roleName = null
+                    )
 
-                // when
-                mockMvc.post("/v1/user") {
-                    contentType = MediaType.APPLICATION_JSON
-                    content = mapper.writeValueAsString(registrationRequest)
-                }.andExpect {
-                    status { isCreated() }
+                    // when
+                    val response = mockMvc.post(url) {
+                        contentType = MediaType.APPLICATION_JSON
+                        content = mapper.writeValueAsString(registrationRequest)
+                    }
+
+
+                    // then
+                    response.andExpect {
+                        status { isCreated() }
+                    }
+                    val savedUser = userRepo.findByEmail(registrationRequest.email)
+                    savedUser shouldNotBe null
+                    savedUser?.firstName?.value shouldBe registrationRequest.firstName
+                    savedUser?.lastName?.value shouldBe registrationRequest.lastName
                 }
 
-                // then
-                val savedUser = userRepo.findByEmail(registrationRequest.email)
-                savedUser shouldNotBe null
-                savedUser?.firstName?.value shouldBe registrationRequest.firstName
-                savedUser?.lastName?.value shouldBe registrationRequest.lastName
+                it("should not save 2 users with the same email") {
+                    // given
+                    val registrationRequest = RegistrationRequest(
+                        firstName = "Jan",
+                        lastName = "Kowalski",
+                        email = "jan.kowalski@example.com",
+                        password = "SecurePassword123!",
+                        companyName = null,
+                        roleName = null
+                    )
+
+                    // when
+                    val firstResponse = mockMvc.post(url) {
+                        contentType = MediaType.APPLICATION_JSON
+                        content = mapper.writeValueAsString(registrationRequest)
+                    }
+                    val secondResponse = mockMvc.post(url) {
+                        contentType = MediaType.APPLICATION_JSON
+                        content = mapper.writeValueAsString(registrationRequest)
+                    }
+
+
+                    // then
+                    firstResponse.andExpect {
+                        status { isCreated() }
+                    }
+                    secondResponse.andExpect {
+                        status { isConflict() }
+                    }
+                    val users = userRepo.findAll()
+                    users.size shouldBe 1
+                    users[0].email.value shouldBe registrationRequest.email
+                }
             }
-
         }
-        context("When registering non-regular user with correct data") {
-
+        context("When registering admin") {
         }
 
         context("When registering user with incorrect data") {
