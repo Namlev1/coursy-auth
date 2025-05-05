@@ -32,6 +32,181 @@ class UserControllerTest @Autowired constructor(
     private val fixtures = ControllerTestFixtures()
 
     @Nested
+    inner class `Authorization` {
+        @Nested
+        inner class `An user` {
+            @Test
+            fun `should access user endpoint`() {
+                // given
+                val jwt = setupAccount(RoleName.ROLE_USER)
+
+                // when
+                val response = mockMvc.post(fixtures.userUrl) {
+                    contentType = MediaType.APPLICATION_JSON
+                    content = null
+                    header("Authorization", "Bearer $jwt")
+                }
+
+                // then
+                response.andExpect {
+                    status { isBadRequest() }
+                }
+            }
+
+            @Test
+            fun `should not have access to admin endpoint`() {
+                // given
+                val jwt = setupAccount(RoleName.ROLE_USER)
+
+                // when
+                val response = mockMvc.post(fixtures.adminUrl) {
+                    contentType = MediaType.APPLICATION_JSON
+                    content = null
+                    header("Authorization", "Bearer $jwt")
+                }
+
+                // then
+                response.andExpect {
+                    status { isForbidden() }
+                }
+            }
+
+            @Test
+            fun `should not have access to super-admin endpoint`() {
+                // given
+                val jwt = setupAccount(RoleName.ROLE_USER)
+
+                // when
+                val response = mockMvc.post(fixtures.superAdminUrl) {
+                    contentType = MediaType.APPLICATION_JSON
+                    content = null
+                    header("Authorization", "Bearer $jwt")
+                }
+
+                // then
+                response.andExpect {
+                    status { isForbidden() }
+                }
+            }
+        }
+
+        @Nested
+        inner class `An admin` {
+            @Test
+            fun `should access user endpoint`() {
+                // given
+                val jwt = setupAccount(RoleName.ROLE_ADMIN)
+
+                // when
+                val response = mockMvc.post(fixtures.userUrl) {
+                    contentType = MediaType.APPLICATION_JSON
+                    content = null
+                    header("Authorization", "Bearer $jwt")
+                }
+
+                // then
+                response.andExpect {
+                    status { isBadRequest() }
+                }
+            }
+
+            @Test
+            fun `should access admin endpoint`() {
+                // given
+                val jwt = setupAccount(RoleName.ROLE_ADMIN)
+
+                // when
+                val response = mockMvc.post(fixtures.adminUrl) {
+                    contentType = MediaType.APPLICATION_JSON
+                    content = null
+                    header("Authorization", "Bearer $jwt")
+                }
+
+                // then
+                response.andExpect {
+                    status { isBadRequest() }
+                }
+            }
+
+            @Test
+            fun `should not have access to super-admin endpoint`() {
+                // given
+                val jwt = setupAccount(RoleName.ROLE_ADMIN)
+
+                // when
+                val response = mockMvc.post(fixtures.superAdminUrl) {
+                    contentType = MediaType.APPLICATION_JSON
+                    content = null
+                    header("Authorization", "Bearer $jwt")
+                }
+
+                // then
+                response.andExpect {
+                    status { isForbidden() }
+                }
+            }
+        }
+
+        @Nested
+        inner class `A super-admin` {
+            @Test
+            fun `should access user endpoint`() {
+                // given
+                val jwt = setupAccount(RoleName.ROLE_SUPER_ADMIN)
+
+                // when
+                val response = mockMvc.post(fixtures.userUrl) {
+                    contentType = MediaType.APPLICATION_JSON
+                    content = null
+                    header("Authorization", "Bearer $jwt")
+                }
+
+                // then
+                response.andExpect {
+                    status { isBadRequest() }
+                }
+            }
+
+            @Test
+            fun `should access admin endpoint`() {
+                // given
+                val jwt = setupAccount(RoleName.ROLE_SUPER_ADMIN)
+
+                // when
+                val response = mockMvc.post(fixtures.adminUrl) {
+                    contentType = MediaType.APPLICATION_JSON
+                    content = null
+                    header("Authorization", "Bearer $jwt")
+                }
+
+                // then
+                response.andExpect {
+                    status { isBadRequest() }
+                }
+            }
+
+            @Test
+            fun `should access super-admin endpoint`() {
+                // given
+                val jwt = setupAccount(RoleName.ROLE_SUPER_ADMIN)
+
+                // when
+                val response = mockMvc.post(fixtures.superAdminUrl) {
+                    contentType = MediaType.APPLICATION_JSON
+                    content = null
+                    header("Authorization", "Bearer $jwt")
+                }
+
+                // then
+                response.andExpect {
+                    status { isBadRequest() }
+                }
+            }
+        }
+    }
+    
+
+    @Nested
     inner class `User registration` {
         @Nested
         inner class `When registering regular user` {
