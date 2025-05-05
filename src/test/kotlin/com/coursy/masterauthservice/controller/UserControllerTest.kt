@@ -1,6 +1,7 @@
 package com.coursy.masterauthservice.controller
 
 import com.coursy.masterauthservice.dto.JwtResponse
+import com.coursy.masterauthservice.dto.UserResponse
 import com.coursy.masterauthservice.failure.AuthorizationFailure
 import com.coursy.masterauthservice.model.RoleName
 import com.coursy.masterauthservice.repository.UserRepository
@@ -15,6 +16,7 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.MediaType
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
+import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.post
 import org.springframework.transaction.annotation.Transactional
 import java.nio.charset.StandardCharsets
@@ -204,7 +206,6 @@ class UserControllerTest @Autowired constructor(
             }
         }
     }
-    
 
     @Nested
     inner class `User registration` {
@@ -539,6 +540,61 @@ class UserControllerTest @Autowired constructor(
                     status { isConflict() }
                 }
                 assertEquals(1, users.size)
+            }
+        }
+    }
+
+    @Nested
+    inner class `User retrieval` {
+        @Nested
+        inner class `single user`() {
+            @Test
+            fun `should retrieve user`() {
+                // given user in DB
+                setupAccount(RoleName.ROLE_USER)
+                val id = userRepo.findByEmail(fixtures.regularUserRequest.email)?.id
+                if (id == null) {
+                    throw IllegalStateException("User not found")
+                }
+                val jwt = setupAccount(RoleName.ROLE_ADMIN)
+
+                // when
+                val request = mockMvc.get("${fixtures.adminUrl}/$id") {
+                    contentType = MediaType.APPLICATION_JSON
+                    header("Authorization", "Bearer $jwt")
+                }
+
+                // then
+                val response = request
+                    .andExpect {
+                        status { isOk() }
+                    }
+                    .andReturn()
+
+                val userResponse = mapper.readValue(
+                    response.response.getContentAsString(StandardCharsets.UTF_8),
+                    UserResponse::class.java
+                )
+
+                assertNotNull(userResponse)
+                assertEquals(id, userResponse.id)
+            }
+
+            @Test
+            fun `should return NOT_FONUD`() {
+                // given user not DB
+                val id = 99L
+                val jwt = setupAccount(RoleName.ROLE_ADMIN)
+
+                // when / then
+                mockMvc
+                    .get("${fixtures.adminUrl}/$id") {
+                        contentType = MediaType.APPLICATION_JSON
+                        header("Authorization", "Bearer $jwt")
+                    }
+                    .andExpect {
+                        status { isNotFound() }
+                    }
             }
         }
     }
