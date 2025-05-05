@@ -50,8 +50,9 @@ class UserController(
             .validate()
             .flatMap { validated ->
                 if (validated.roleName == RoleName.ROLE_SUPER_ADMIN)
-                    AuthorizationFailure.UserSuspended.left()
-                userService.createUser(validated)
+                    AuthorizationFailure.InsufficientRole.left()
+                else
+                    userService.createUser(validated)
             }
 
         return result.fold(

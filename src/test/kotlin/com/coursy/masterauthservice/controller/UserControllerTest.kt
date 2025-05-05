@@ -1,6 +1,7 @@
 package com.coursy.masterauthservice.controller
 
 import com.coursy.masterauthservice.dto.JwtResponse
+import com.coursy.masterauthservice.failure.AuthorizationFailure
 import com.coursy.masterauthservice.model.RoleName
 import com.coursy.masterauthservice.repository.UserRepository
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -214,8 +215,21 @@ class UserControllerTest @Autowired constructor(
             @Nested
             inner class `from user's point of view` {
                 @Test
-                fun `should return 403`() {
+                fun `should create regular user anyway`() {
+                    val registrationRequest = fixtures.adminRequest
 
+                    // when
+                    val adminResponse = mockMvc.post(fixtures.userUrl) {
+                        contentType = MediaType.APPLICATION_JSON
+                        content = mapper.writeValueAsString(registrationRequest)
+                    }
+
+                    // then
+                    adminResponse.andExpect {
+                        status { isCreated() }
+                    }
+                    val user = userRepo.findByEmail(registrationRequest.email)
+                    assertEquals(RoleName.ROLE_USER, user?.role?.name)
                 }
             }
 
@@ -225,7 +239,6 @@ class UserControllerTest @Autowired constructor(
                 fun `should save new admin`() {
                     // given
                     val jwt = setupAccount(RoleName.ROLE_ADMIN)
-
                     val registrationRequest = fixtures.adminRequest
 
                     // when
@@ -245,26 +258,32 @@ class UserControllerTest @Autowired constructor(
                     assertEquals(registrationRequest.email, user?.email?.value)
                     assertEquals(RoleName.ROLE_ADMIN, user?.role?.name)
                 }
+            }
 
+            @Nested
+            inner class `from super-admin's point of view` {
                 @Test
-                fun `should not save 2 admins with the same email`() {
-                    // given one admin is already registered
-                    val jwt = setupAccount(RoleName.ROLE_ADMIN)
-                    val registrationRequest = fixtures.adminSetupRequest
+                fun `should save new admin`() {
+                    // given
+                    val jwt = setupAccount(RoleName.ROLE_SUPER_ADMIN)
+                    val registrationRequest = fixtures.adminRequest
 
                     // when
-                    val adminResponse = mockMvc.post(fixtures.adminUrl) {
+                    val adminResponse = mockMvc.post(fixtures.superAdminUrl) {
                         contentType = MediaType.APPLICATION_JSON
                         content = mapper.writeValueAsString(registrationRequest)
                         header("Authorization", "Bearer $jwt")
                     }
-                    val users = userRepo.findAll()
 
                     // then
                     adminResponse.andExpect {
-                        status { isConflict() }
+                        status { isCreated() }
                     }
-                    assertEquals(1, users.size)
+
+                    val user = userRepo.findByEmail(registrationRequest.email)
+                    assertNotNull(user)
+                    assertEquals(registrationRequest.email, user?.email?.value)
+                    assertEquals(RoleName.ROLE_ADMIN, user?.role?.name)
                 }
             }
         }
@@ -272,51 +291,79 @@ class UserControllerTest @Autowired constructor(
         @Nested
         inner class `When registering super-admin` {
             @Nested
-            inner class `from super-admin's point of view` {
+            inner class `from admin's point of view` {
                 @Test
-                fun `should save new super-admin`() {
+                fun `should return 403`() {
                     // given
                     val jwt = setupAccount(RoleName.ROLE_SUPER_ADMIN)
-
                     val registrationRequest = fixtures.superAdminRequest
 
                     // when
-                    val response = mockMvc.post(fixtures.superAdminUrl) {
+                    val result = mockMvc.post(fixtures.adminUrl) {
                         contentType = MediaType.APPLICATION_JSON
                         content = mapper.writeValueAsString(registrationRequest)
                         header("Authorization", "Bearer $jwt")
                     }
 
                     // then
-                    response.andExpect {
-                        status { isCreated() }
-                    }
+                    val response = result.andExpect {
+                        status { isForbidden() }
+                    }.andReturn()
+
+                    val body = response.response.getContentAsString(StandardCharsets.UTF_8)
 
                     val user = userRepo.findByEmail(registrationRequest.email)
-                    assertNotNull(user)
-                    assertEquals(registrationRequest.email, user?.email?.value)
-                    assertEquals(RoleName.ROLE_SUPER_ADMIN, user?.role?.name)
+                    assertEquals(null, user)
+                    assertEquals(AuthorizationFailure.InsufficientRole.message(), body)
+                }
+            }
+        }
+
+        @Nested
+        inner class `from super-admin's point of view` {
+            @Test
+            fun `should save new super-admin`() {
+                // given
+                val jwt = setupAccount(RoleName.ROLE_SUPER_ADMIN)
+
+                val registrationRequest = fixtures.superAdminRequest
+
+                // when
+                val response = mockMvc.post(fixtures.superAdminUrl) {
+                    contentType = MediaType.APPLICATION_JSON
+                    content = mapper.writeValueAsString(registrationRequest)
+                    header("Authorization", "Bearer $jwt")
                 }
 
-                @Test
-                fun `should not save 2 super_admins with the same email`() {
-                    val jwt = setupAccount(RoleName.ROLE_SUPER_ADMIN)
-                    val registrationRequest = fixtures.superAdminSetupRequest
-
-                    // when
-                    val adminResponse = mockMvc.post(fixtures.userUrl) {
-                        contentType = MediaType.APPLICATION_JSON
-                        content = mapper.writeValueAsString(registrationRequest)
-                        header("Authorization", "Bearer $jwt")
-                    }
-                    val users = userRepo.findAll()
-
-                    // then
-                    adminResponse.andExpect {
-                        status { isConflict() }
-                    }
-                    assertEquals(1, users.size)
+                // then
+                response.andExpect {
+                    status { isCreated() }
                 }
+
+                val user = userRepo.findByEmail(registrationRequest.email)
+                assertNotNull(user)
+                assertEquals(registrationRequest.email, user?.email?.value)
+                assertEquals(RoleName.ROLE_SUPER_ADMIN, user?.role?.name)
+            }
+
+            @Test
+            fun `should not save 2 super_admins with the same email`() {
+                val jwt = setupAccount(RoleName.ROLE_SUPER_ADMIN)
+                val registrationRequest = fixtures.superAdminSetupRequest
+
+                // when
+                val adminResponse = mockMvc.post(fixtures.userUrl) {
+                    contentType = MediaType.APPLICATION_JSON
+                    content = mapper.writeValueAsString(registrationRequest)
+                    header("Authorization", "Bearer $jwt")
+                }
+                val users = userRepo.findAll()
+
+                // then
+                adminResponse.andExpect {
+                    status { isConflict() }
+                }
+                assertEquals(1, users.size)
             }
         }
     }
@@ -327,7 +374,7 @@ class UserControllerTest @Autowired constructor(
             RoleName.ROLE_ADMIN -> fixtures.adminSetupRequest
             else -> fixtures.regularUserRequest
         }
-        userController.createUser(registerRequest)
+        userController.createSuperUser(registerRequest)
 
         val loginRequest = registerRequest.toLoginRequest()
 
