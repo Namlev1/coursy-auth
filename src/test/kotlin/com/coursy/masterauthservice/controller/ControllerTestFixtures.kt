@@ -18,6 +18,7 @@ class ControllerTestFixtures {
     val regularPassword = "SecurePassword123!"
 
     val adminSetupEmail = "admin_setup@email.com"
+    val superAdminSetupEmail = "super_admin_setup@email.com"
 
     val unusedName = "test_name"
     val unusedLastName = "test_last_name"
@@ -26,6 +27,7 @@ class ControllerTestFixtures {
 
     val userRoleName = RoleName.ROLE_USER.toString()
     val adminRoleName = RoleName.ROLE_ADMIN.toString()
+    val superAdminRoleName = RoleName.ROLE_SUPER_ADMIN.toString()
 
     val regularUserRequest = RegistrationRequest(
         firstName = regularName,
@@ -45,6 +47,15 @@ class ControllerTestFixtures {
         roleName = adminRoleName
     )
 
+    val superAdminRequest = RegistrationRequest(
+        firstName = regularName,
+        lastName = regularLastName,
+        email = regularEmail,
+        password = regularPassword,
+        companyName = null,
+        roleName = superAdminRoleName
+    )
+
     val adminSetupRequest = RegistrationRequest(
         firstName = regularName + "Setup",
         lastName = regularLastName + "Setup",
@@ -52,6 +63,15 @@ class ControllerTestFixtures {
         password = regularPassword,
         companyName = null,
         roleName = adminRoleName
+    )
+
+    val superAdminSetupRequest = RegistrationRequest(
+        firstName = regularName + "SuperAdminSetup",
+        lastName = regularLastName + "SuperAdminSetup",
+        email = superAdminSetupEmail,
+        password = regularPassword,
+        companyName = null,
+        roleName = superAdminRoleName
     )
 
     fun createRegistrationRequest(
