@@ -1,8 +1,6 @@
 package com.coursy.masterauthservice.controller
 
 import com.coursy.masterauthservice.dto.JwtResponse
-import com.coursy.masterauthservice.dto.LoginRequest
-import com.coursy.masterauthservice.dto.RegistrationRequest
 import com.coursy.masterauthservice.model.RoleName
 import com.coursy.masterauthservice.repository.UserRepository
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -17,8 +15,6 @@ import org.springframework.http.MediaType
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.post
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.springframework.transaction.annotation.Transactional
 import java.nio.charset.StandardCharsets
 
@@ -32,9 +28,7 @@ class UserControllerTest @Autowired constructor(
     private val userRepo: UserRepository,
     private val userController: UserController
 ) {
-
-    private val userUrl = "/v1/user"
-    private val authUrl = "/v1/auth"
+    private val fixtures = ControllerTestFixtures()
 
     @Nested
     inner class `User registration` {
@@ -48,17 +42,10 @@ class UserControllerTest @Autowired constructor(
                 @Test
                 fun `should save the user`() {
                     // given
-                    val registrationRequest = RegistrationRequest(
-                        firstName = "Jan",
-                        lastName = "Kowalski",
-                        email = "jan.kowalski@example.com",
-                        password = "SecurePassword123!",
-                        companyName = null,
-                        roleName = null
-                    )
+                    val registrationRequest = fixtures.regularUserRequest
 
                     // when
-                    val response = mockMvc.post(userUrl) {
+                    val response = mockMvc.post(fixtures.userUrl) {
                         contentType = MediaType.APPLICATION_JSON
                         content = mapper.writeValueAsString(registrationRequest)
                     }
@@ -77,22 +64,15 @@ class UserControllerTest @Autowired constructor(
                 @Test
                 fun `should not save 2 users with the same email`() {
                     // given
-                    val registrationRequest = RegistrationRequest(
-                        firstName = "Jan",
-                        lastName = "Kowalski",
-                        email = "jan.kowalski@example.com",
-                        password = "SecurePassword123!",
-                        companyName = null,
-                        roleName = null
-                    )
+                    val registrationRequest = fixtures.regularUserRequest
 
                     // when
-                    val firstResponse = mockMvc.post(userUrl) {
+                    val firstResponse = mockMvc.post(fixtures.userUrl) {
                         contentType = MediaType.APPLICATION_JSON
                         content = mapper.writeValueAsString(registrationRequest)
                     }
 
-                    val secondResponse = mockMvc.post(userUrl) {
+                    val secondResponse = mockMvc.post(fixtures.userUrl) {
                         contentType = MediaType.APPLICATION_JSON
                         content = mapper.writeValueAsString(registrationRequest)
                     }
@@ -120,14 +100,12 @@ class UserControllerTest @Autowired constructor(
                 @Test
                 fun `should save new admin`() {
                     // given
-                    val adminSetup = setupAdmin()
-                    val jwt = adminSetup.jwt
-                    val adminRequest = adminSetup.adminRequest
+                    val jwt = setupAdmin()
 
-                    val registrationRequest = adminRequest.copy(email = "second_admin@admin.com")
+                    val registrationRequest = fixtures.adminRequest
 
                     // when
-                    val adminResponse = mockMvc.post("$userUrl/admin") {
+                    val adminResponse = mockMvc.post("${fixtures.userUrl}/admin") {
                         contentType = MediaType.APPLICATION_JSON
                         content = mapper.writeValueAsString(registrationRequest)
                         header("Authorization", "Bearer $jwt")
@@ -147,28 +125,18 @@ class UserControllerTest @Autowired constructor(
         }
     }
 
-    private fun setupAdmin(): AdminSetup {
-        val adminRequest = RegistrationRequest(
-            firstName = "AdminName",
-            lastName = "AdminPassword",
-            email = "admin@admin.com",
-            password = "SecurePassword123!",
-            companyName = null,
-            roleName = RoleName.ROLE_ADMIN.toString()
-        )
+    private fun setupAdmin(): String {
+        val adminRequest = fixtures.adminSetupRequest
         userController.createUser(adminRequest)
 
-        val loginRequest = LoginRequest(
-            email = adminRequest.email,
-            password = adminRequest.password
-        )
+        val loginRequest = adminRequest.toLoginRequest()
 
-        val authResponse = mockMvc.perform(
-            post("$authUrl/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(mapper.writeValueAsString(loginRequest))
-        )
-            .andExpect(status().isOk())
+        val authResponse = mockMvc.post("${fixtures.authUrl}/login") {
+            contentType = MediaType.APPLICATION_JSON
+            content = mapper.writeValueAsString(loginRequest)
+        }.andExpect {
+            status { isOk() }
+        }
             .andReturn()
 
         val jwtResponse = mapper.readValue(
@@ -176,11 +144,6 @@ class UserControllerTest @Autowired constructor(
             JwtResponse::class.java
         )
 
-        val jwt = jwtResponse.token
-
-        return AdminSetup(adminRequest, jwt)
+        return jwtResponse.token
     }
-
-    // Data class to hold admin setup information
-    data class AdminSetup(val adminRequest: RegistrationRequest, val jwt: String)
 }
