@@ -90,6 +90,68 @@ class UserControllerTest @Autowired constructor(
                     assertEquals(registrationRequest.email, users[0].email.value)
                 }
             }
+
+            @Nested
+            inner class `from admin's point of view` {
+                @Nested
+                inner class `with correct data` {
+                    @Test
+                    fun `should save the user`() {
+                        // given
+                        val jwt = setupAdmin()
+                        val registrationRequest = fixtures.regularUserRequest
+
+                        // when
+                        val response = mockMvc.post(fixtures.adminUrl) {
+                            contentType = MediaType.APPLICATION_JSON
+                            content = mapper.writeValueAsString(registrationRequest)
+                            header("Authorization", "Bearer $jwt")
+                        }
+
+                        // then
+                        response.andExpect {
+                            status { isCreated() }
+                        }
+
+                        val savedUser = userRepo.findByEmail(registrationRequest.email)
+                        assertNotNull(savedUser)
+                        assertEquals(registrationRequest.firstName, savedUser?.firstName?.value)
+                        assertEquals(registrationRequest.lastName, savedUser?.lastName?.value)
+                    }
+
+                    @Test
+                    fun `should not save 2 users with the same email`() {
+                        // given
+                        val jwt = setupAdmin()
+                        val registrationRequest = fixtures.regularUserRequest
+
+                        // when
+                        val firstResponse = mockMvc.post(fixtures.adminUrl) {
+                            contentType = MediaType.APPLICATION_JSON
+                            content = mapper.writeValueAsString(registrationRequest)
+                            header("Authorization", "Bearer $jwt")
+                        }
+
+                        val secondResponse = mockMvc.post(fixtures.adminUrl) {
+                            contentType = MediaType.APPLICATION_JSON
+                            content = mapper.writeValueAsString(registrationRequest)
+                            header("Authorization", "Bearer $jwt")
+                        }
+
+                        // then
+                        firstResponse.andExpect {
+                            status { isCreated() }
+                        }
+                        secondResponse.andExpect {
+                            status { isConflict() }
+                        }
+
+                        val users = userRepo.findAll()
+                        assertEquals(1, users.size)
+                        assertEquals(registrationRequest.email, users[0].email.value)
+                    }
+                }
+            }
         }
 
         @Nested
@@ -121,6 +183,29 @@ class UserControllerTest @Autowired constructor(
                     assertEquals(registrationRequest.email, user?.email?.value)
                     assertEquals(RoleName.ROLE_ADMIN, user?.role?.name)
                 }
+
+                @Test
+                fun `should not save 2 admins with the same email`() {
+                    // given one admin is already registered
+                    val jwt = setupAdmin()
+                    val registrationRequest = fixtures.adminSetupRequest
+
+                    // when
+                    val adminResponse = mockMvc.post("${fixtures.userUrl}/admin") {
+                        contentType = MediaType.APPLICATION_JSON
+                        content = mapper.writeValueAsString(registrationRequest)
+                        header("Authorization", "Bearer $jwt")
+                    }
+                    val users = userRepo.findAll()
+
+                    // then
+                    adminResponse.andExpect {
+                        status { isConflict() }
+                    }
+                    assertEquals(1, users.size)
+                }
+
+
             }
         }
     }

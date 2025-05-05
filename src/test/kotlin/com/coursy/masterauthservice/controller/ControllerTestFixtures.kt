@@ -7,6 +7,8 @@ import com.coursy.masterauthservice.model.RoleName
 class ControllerTestFixtures {
     // API endpoints
     val userUrl = "/v1/user"
+    val adminUrl = "$userUrl/admin"
+    val superAdminUrl = "$userUrl/super-admin"
     val authUrl = "/v1/auth"
 
     // Data fields
