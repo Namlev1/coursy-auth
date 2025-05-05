@@ -32,13 +32,10 @@ class UserControllerTest @Autowired constructor(
 
     @Nested
     inner class `User registration` {
-
         @Nested
         inner class `When registering regular user` {
-
             @Nested
-            inner class `with correct data` {
-
+            inner class `from user's point of view` {
                 @Test
                 fun `should save the user`() {
                     // given
@@ -93,141 +90,141 @@ class UserControllerTest @Autowired constructor(
 
             @Nested
             inner class `from admin's point of view` {
-                @Nested
-                inner class `with correct data` {
-                    @Test
-                    fun `should save the user`() {
-                        // given
-                        val jwt = setupAdmin()
-                        val registrationRequest = fixtures.regularUserRequest
+                @Test
+                fun `should save the user`() {
+                    // given
+                    val jwt = setupAccount(RoleName.ROLE_ADMIN)
+                    val registrationRequest = fixtures.regularUserRequest
 
-                        // when
-                        val response = mockMvc.post(fixtures.adminUrl) {
-                            contentType = MediaType.APPLICATION_JSON
-                            content = mapper.writeValueAsString(registrationRequest)
-                            header("Authorization", "Bearer $jwt")
-                        }
-
-                        // then
-                        response.andExpect {
-                            status { isCreated() }
-                        }
-
-                        val savedUser = userRepo.findByEmail(registrationRequest.email)
-                        assertNotNull(savedUser)
-                        assertEquals(registrationRequest.firstName, savedUser?.firstName?.value)
-                        assertEquals(registrationRequest.lastName, savedUser?.lastName?.value)
+                    // when
+                    val response = mockMvc.post(fixtures.adminUrl) {
+                        contentType = MediaType.APPLICATION_JSON
+                        content = mapper.writeValueAsString(registrationRequest)
+                        header("Authorization", "Bearer $jwt")
                     }
 
-                    @Test
-                    fun `should not save 2 users with the same email`() {
-                        // given
-                        val jwt = setupAdmin()
-                        val registrationRequest = fixtures.regularUserRequest
-
-                        // when
-                        val firstResponse = mockMvc.post(fixtures.adminUrl) {
-                            contentType = MediaType.APPLICATION_JSON
-                            content = mapper.writeValueAsString(registrationRequest)
-                            header("Authorization", "Bearer $jwt")
-                        }
-
-                        val secondResponse = mockMvc.post(fixtures.adminUrl) {
-                            contentType = MediaType.APPLICATION_JSON
-                            content = mapper.writeValueAsString(registrationRequest)
-                            header("Authorization", "Bearer $jwt")
-                        }
-
-                        // then
-                        firstResponse.andExpect {
-                            status { isCreated() }
-                        }
-                        secondResponse.andExpect {
-                            status { isConflict() }
-                        }
-
-                        val users = userRepo.findAll()
-                        assertEquals(2, users.size)
-                        val user = userRepo.findByEmail(registrationRequest.email)
-                        assertEquals(registrationRequest.email, user?.email?.value)
+                    // then
+                    response.andExpect {
+                        status { isCreated() }
                     }
+
+                    val savedUser = userRepo.findByEmail(registrationRequest.email)
+                    assertNotNull(savedUser)
+                    assertEquals(registrationRequest.firstName, savedUser?.firstName?.value)
+                    assertEquals(registrationRequest.lastName, savedUser?.lastName?.value)
+                }
+
+                @Test
+                fun `should not save 2 users with the same email`() {
+                    // given
+                    val jwt = setupAccount(RoleName.ROLE_ADMIN)
+                    val registrationRequest = fixtures.regularUserRequest
+
+                    // when
+                    val firstResponse = mockMvc.post(fixtures.adminUrl) {
+                        contentType = MediaType.APPLICATION_JSON
+                        content = mapper.writeValueAsString(registrationRequest)
+                        header("Authorization", "Bearer $jwt")
+                    }
+
+                    val secondResponse = mockMvc.post(fixtures.adminUrl) {
+                        contentType = MediaType.APPLICATION_JSON
+                        content = mapper.writeValueAsString(registrationRequest)
+                        header("Authorization", "Bearer $jwt")
+                    }
+
+                    // then
+                    firstResponse.andExpect {
+                        status { isCreated() }
+                    }
+                    secondResponse.andExpect {
+                        status { isConflict() }
+                    }
+
+                    val users = userRepo.findAll()
+                    assertEquals(2, users.size)
+                    val user = userRepo.findByEmail(registrationRequest.email)
+                    assertEquals(registrationRequest.email, user?.email?.value)
                 }
             }
 
             @Nested
             inner class `from super-admin's point of view` {
-                @Nested
-                inner class `with correct data` {
-                    @Test
-                    fun `should save the user`() {
-                        // given
-                        val jwt = setupAdmin(isSuperAdmin = true)
-                        val registrationRequest = fixtures.regularUserRequest
+                @Test
+                fun `should save the user`() {
+                    // given
+                    val jwt = setupAccount(RoleName.ROLE_SUPER_ADMIN)
+                    val registrationRequest = fixtures.regularUserRequest
 
-                        // when
-                        val response = mockMvc.post(fixtures.superAdminUrl) {
-                            contentType = MediaType.APPLICATION_JSON
-                            content = mapper.writeValueAsString(registrationRequest)
-                            header("Authorization", "Bearer $jwt")
-                        }
-
-                        // then
-                        response.andExpect {
-                            status { isCreated() }
-                        }
-
-                        val savedUser = userRepo.findByEmail(registrationRequest.email)
-                        assertNotNull(savedUser)
-                        assertEquals(registrationRequest.firstName, savedUser?.firstName?.value)
-                        assertEquals(registrationRequest.lastName, savedUser?.lastName?.value)
+                    // when
+                    val response = mockMvc.post(fixtures.superAdminUrl) {
+                        contentType = MediaType.APPLICATION_JSON
+                        content = mapper.writeValueAsString(registrationRequest)
+                        header("Authorization", "Bearer $jwt")
                     }
 
-                    @Test
-                    fun `should not save 2 users with the same email`() {
-                        // given
-                        val jwt = setupAdmin(isSuperAdmin = true)
-                        val registrationRequest = fixtures.regularUserRequest
-
-                        // when
-                        val firstResponse = mockMvc.post(fixtures.superAdminUrl) {
-                            contentType = MediaType.APPLICATION_JSON
-                            content = mapper.writeValueAsString(registrationRequest)
-                            header("Authorization", "Bearer $jwt")
-                        }
-
-                        val secondResponse = mockMvc.post(fixtures.adminUrl) {
-                            contentType = MediaType.APPLICATION_JSON
-                            content = mapper.writeValueAsString(registrationRequest)
-                            header("Authorization", "Bearer $jwt")
-                        }
-
-                        // then
-                        firstResponse.andExpect {
-                            status { isCreated() }
-                        }
-                        secondResponse.andExpect {
-                            status { isConflict() }
-                        }
-
-                        val users = userRepo.findAll()
-                        assertEquals(2, users.size)
-                        val user = userRepo.findByEmail(registrationRequest.email)
-                        assertEquals(registrationRequest.email, user?.email?.value)
+                    // then
+                    response.andExpect {
+                        status { isCreated() }
                     }
+
+                    val savedUser = userRepo.findByEmail(registrationRequest.email)
+                    assertNotNull(savedUser)
+                    assertEquals(registrationRequest.firstName, savedUser?.firstName?.value)
+                    assertEquals(registrationRequest.lastName, savedUser?.lastName?.value)
+                }
+
+                @Test
+                fun `should not save 2 users with the same email`() {
+                    // given
+                    val jwt = setupAccount(RoleName.ROLE_SUPER_ADMIN)
+                    val registrationRequest = fixtures.regularUserRequest
+
+                    // when
+                    val firstResponse = mockMvc.post(fixtures.superAdminUrl) {
+                        contentType = MediaType.APPLICATION_JSON
+                        content = mapper.writeValueAsString(registrationRequest)
+                        header("Authorization", "Bearer $jwt")
+                    }
+
+                    val secondResponse = mockMvc.post(fixtures.adminUrl) {
+                        contentType = MediaType.APPLICATION_JSON
+                        content = mapper.writeValueAsString(registrationRequest)
+                        header("Authorization", "Bearer $jwt")
+                    }
+
+                    // then
+                    firstResponse.andExpect {
+                        status { isCreated() }
+                    }
+                    secondResponse.andExpect {
+                        status { isConflict() }
+                    }
+
+                    val users = userRepo.findAll()
+                    assertEquals(2, users.size)
+                    val user = userRepo.findByEmail(registrationRequest.email)
+                    assertEquals(registrationRequest.email, user?.email?.value)
                 }
             }
         }
 
         @Nested
         inner class `When registering admin` {
-            // todo test authorization for another user classes
+            @Nested
+            inner class `from user's point of view` {
+                @Test
+                fun `should return 403`() {
+
+                }
+            }
 
             @Nested
-            inner class `with correct data` {
+            inner class `from admin's point of view` {
                 @Test
                 fun `should save new admin`() {
                     // given
-                    val jwt = setupAdmin()
+                    val jwt = setupAccount(RoleName.ROLE_ADMIN)
 
                     val registrationRequest = fixtures.adminRequest
 
@@ -252,7 +249,7 @@ class UserControllerTest @Autowired constructor(
                 @Test
                 fun `should not save 2 admins with the same email`() {
                     // given one admin is already registered
-                    val jwt = setupAdmin()
+                    val jwt = setupAccount(RoleName.ROLE_ADMIN)
                     val registrationRequest = fixtures.adminSetupRequest
 
                     // when
@@ -269,18 +266,17 @@ class UserControllerTest @Autowired constructor(
                     }
                     assertEquals(1, users.size)
                 }
-
             }
         }
 
         @Nested
-        inner class `When registering super-user` {
+        inner class `When registering super-admin` {
             @Nested
-            inner class `with correct data` {
+            inner class `from super-admin's point of view` {
                 @Test
                 fun `should save new super-admin`() {
                     // given
-                    val jwt = setupAdmin(isSuperAdmin = true)
+                    val jwt = setupAccount(RoleName.ROLE_SUPER_ADMIN)
 
                     val registrationRequest = fixtures.superAdminRequest
 
@@ -304,7 +300,7 @@ class UserControllerTest @Autowired constructor(
 
                 @Test
                 fun `should not save 2 super_admins with the same email`() {
-                    val jwt = setupAdmin(isSuperAdmin = true)
+                    val jwt = setupAccount(RoleName.ROLE_SUPER_ADMIN)
                     val registrationRequest = fixtures.superAdminSetupRequest
 
                     // when
@@ -321,15 +317,15 @@ class UserControllerTest @Autowired constructor(
                     }
                     assertEquals(1, users.size)
                 }
-
             }
         }
     }
 
-    private fun setupAdmin(isSuperAdmin: Boolean = false): String {
-        val registerRequest = when (isSuperAdmin) {
-            true -> fixtures.superAdminSetupRequest
-            false -> fixtures.adminSetupRequest
+    private fun setupAccount(role: RoleName = RoleName.ROLE_USER): String {
+        val registerRequest = when (role) {
+            RoleName.ROLE_SUPER_ADMIN -> fixtures.superAdminSetupRequest
+            RoleName.ROLE_ADMIN -> fixtures.adminSetupRequest
+            else -> fixtures.regularUserRequest
         }
         userController.createUser(registerRequest)
 
