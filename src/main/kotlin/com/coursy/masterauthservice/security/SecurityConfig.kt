@@ -40,9 +40,9 @@ class SecurityConfig(
                         "/v1/auth/**",
                         "/v1/user"
                     ).permitAll()
-                    .requestMatchers("/v1/*/admin/**")
+                    .requestMatchers("/v1/admin/**")
                     .hasAnyAuthority(RoleName.ROLE_ADMIN.toString(), RoleName.ROLE_SUPER_ADMIN.toString())
-                    .requestMatchers("/v1/*/super-admin/**").hasAuthority(RoleName.ROLE_SUPER_ADMIN.toString())
+                    .requestMatchers("/v1/super-admin/**").hasAuthority(RoleName.ROLE_SUPER_ADMIN.toString())
                     .anyRequest().authenticated()
             }
 

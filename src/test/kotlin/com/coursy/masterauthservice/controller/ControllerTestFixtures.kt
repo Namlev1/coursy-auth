@@ -1,14 +1,26 @@
 package com.coursy.masterauthservice.controller
 
+import com.coursy.masterauthservice.dto.JwtResponse
 import com.coursy.masterauthservice.dto.LoginRequest
 import com.coursy.masterauthservice.dto.RegistrationRequest
 import com.coursy.masterauthservice.model.RoleName
+import com.fasterxml.jackson.databind.ObjectMapper
+import org.springframework.http.MediaType
+import org.springframework.stereotype.Component
+import org.springframework.test.web.servlet.MockMvc
+import org.springframework.test.web.servlet.post
+import java.nio.charset.StandardCharsets
 
-class ControllerTestFixtures {
+@Component
+class ControllerTestFixtures(
+    private val superAdminController: SuperAdminController,
+    private val mapper: ObjectMapper = ObjectMapper(),
+    private val mockMvc: MockMvc
+) {
     // API endpoints
     val userUrl = "/v1/user"
-    val adminUrl = "$userUrl/admin"
-    val superAdminUrl = "$userUrl/super-admin"
+    val adminUrl = "/v1/admin"
+    val superAdminUrl = "/v1/super-admin"
     val authUrl = "/v1/auth"
 
     // Data fields
@@ -90,6 +102,31 @@ class ControllerTestFixtures {
         roleName = role
     )
 
+    fun setupAccount(role: RoleName = RoleName.ROLE_USER): String {
+        val registerRequest = when (role) {
+            RoleName.ROLE_SUPER_ADMIN -> superAdminSetupRequest
+            RoleName.ROLE_ADMIN -> adminSetupRequest
+            else -> regularUserRequest
+        }
+        superAdminController.createSuperUser(registerRequest)
+
+        val loginRequest = registerRequest.toLoginRequest()
+
+        val authResponse = mockMvc.post("${authUrl}/login") {
+            contentType = MediaType.APPLICATION_JSON
+            content = mapper.writeValueAsString(loginRequest)
+        }.andExpect {
+            status { isOk() }
+        }
+            .andReturn()
+
+        val jwtResponse = mapper.readValue(
+            authResponse.response.getContentAsString(StandardCharsets.UTF_8),
+            JwtResponse::class.java
+        )
+
+        return jwtResponse.token
+    }
 }
 
 fun RegistrationRequest.toLoginRequest() = LoginRequest(
