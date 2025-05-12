@@ -1,9 +1,6 @@
 package com.coursy.masterauthservice.controller
 
-import com.coursy.masterauthservice.dto.ChangePasswordRequest
-import com.coursy.masterauthservice.dto.JwtResponse
-import com.coursy.masterauthservice.dto.LoginRequest
-import com.coursy.masterauthservice.dto.RegistrationRequest
+import com.coursy.masterauthservice.dto.*
 import com.coursy.masterauthservice.model.RoleName
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.http.MediaType
@@ -89,6 +86,13 @@ class ControllerTestFixtures(
 
     val changePasswordRequest = ChangePasswordRequest(
         password = "newPassw0RD!"
+    )
+
+    val userUpdateRequest = UserUpdateRequest(
+        firstName = "UpdatedFirstName",
+        lastName = "UpdatedLastName",
+        companyName = null,
+        roleName = null
     )
 
     fun createRegistrationRequest(

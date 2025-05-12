@@ -17,6 +17,7 @@ import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.post
+import org.springframework.test.web.servlet.put
 import org.springframework.transaction.annotation.Transactional
 import java.nio.charset.StandardCharsets
 
@@ -307,6 +308,58 @@ class AdminControllerTest @Autowired constructor(
             // then
             response2.andExpect {
                 status { isBadRequest() }
+            }
+        }
+    }
+
+    @Nested
+    inner class `User update`() {
+        @Test
+        fun `should update user`() {
+            // given
+            val jwt = fixtures.setupAccount(RoleName.ROLE_ADMIN)
+            fixtures.setupAccount()
+            val email = fixtures.regularEmail
+            val userId = userRepo.findByEmail(email)?.id
+            val updateRequest = fixtures.userUpdateRequest
+
+            // when
+            val response = mockMvc.put("${fixtures.adminUrl}/$userId") {
+                contentType = MediaType.APPLICATION_JSON
+                content = mapper.writeValueAsString(updateRequest)
+                header("Authorization", "Bearer $jwt")
+            }
+
+            // then
+            response.andExpect {
+                status { isOk() }
+            }
+
+            val updatedUser = userRepo.findByEmail(email)
+            assertNotNull(updatedUser)
+            assertEquals(updateRequest.firstName, updatedUser?.firstName?.value)
+            assertEquals(updateRequest.lastName, updatedUser?.lastName?.value)
+        }
+
+        @Test
+        fun `should not update user role`() {
+            // given
+            val jwt = fixtures.setupAccount(RoleName.ROLE_ADMIN)
+            fixtures.setupAccount()
+            val email = fixtures.regularEmail
+            val userId = userRepo.findByEmail(email)?.id
+            val updateRequest = fixtures.userUpdateRequest.copy(roleName = RoleName.ROLE_ADMIN.toString())
+
+            // when
+            val response = mockMvc.put("${fixtures.adminUrl}/$userId") {
+                contentType = MediaType.APPLICATION_JSON
+                content = mapper.writeValueAsString(updateRequest)
+                header("Authorization", "Bearer $jwt")
+            }
+
+            // then
+            response.andExpect {
+                status { isForbidden() }
             }
         }
     }
