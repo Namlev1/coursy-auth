@@ -244,4 +244,70 @@ class AdminControllerTest @Autowired constructor(
                 }
         }
     }
+
+    @Nested
+    inner class `User listing` {
+        @Test
+        fun `should retrieve paginated users`() {
+            // given
+            val jwt = fixtures.setupAccount(RoleName.ROLE_ADMIN)
+            // Set up multiple users to ensure pagination works
+            val userCount = 15
+            repeat(userCount) { index ->
+                val email = "test.user${index}@example.com"
+                val request = fixtures.createRegistrationRequest(
+                    firstName = "Test",
+                    lastName = "User",
+                    email = email,
+                )
+                mockMvc.post(fixtures.adminUrl) {
+                    contentType = MediaType.APPLICATION_JSON
+                    content = mapper.writeValueAsString(request)
+                    header("Authorization", "Bearer $jwt")
+                }
+            }
+
+            // when
+            val response = mockMvc.get("${fixtures.adminUrl}?page=0&size=5") {
+                contentType = MediaType.APPLICATION_JSON
+                header("Authorization", "Bearer $jwt")
+            }
+
+            // then
+            response.andExpect {
+                status { isOk() }
+                jsonPath("$.page.size") { value(5) }
+                jsonPath("$.page.totalElements") { value(16) }
+                jsonPath("$.page.number") { value(0) }
+            }
+        }
+
+        @Test
+        fun `should return bad request for invalid page parameters`() {
+            // given
+            val jwt = fixtures.setupAccount(RoleName.ROLE_ADMIN)
+
+            // when - test with negative page number
+            val response1 = mockMvc.get("${fixtures.adminUrl}?page=-1&size=5") {
+                contentType = MediaType.APPLICATION_JSON
+                header("Authorization", "Bearer $jwt")
+            }
+
+            // then
+            response1.andExpect {
+                status { isBadRequest() }
+            }
+
+            // when - test with negative size
+            val response2 = mockMvc.get("${fixtures.adminUrl}?page=0&size=-5") {
+                contentType = MediaType.APPLICATION_JSON
+                header("Authorization", "Bearer $jwt")
+            }
+
+            // then
+            response2.andExpect {
+                status { isBadRequest() }
+            }
+        }
+    }
 }
