@@ -14,7 +14,10 @@ import org.springframework.http.MediaType
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.post
+import org.springframework.test.web.servlet.put
 import org.springframework.transaction.annotation.Transactional
+import kotlin.jvm.optionals.getOrElse
+import kotlin.test.assertNotEquals
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -188,6 +191,64 @@ class SuperAdminControllerTest @Autowired constructor(
             assertNotNull(user)
             assertEquals(registrationRequest.email, user?.email?.value)
             assertEquals(RoleName.ROLE_SUPER_ADMIN, user?.role?.name)
+        }
+    }
+
+    @Nested
+    inner class `User update` {
+        @Test
+        fun `should update user role`() {
+            // given
+            val jwt = fixtures.setupAccount(RoleName.ROLE_SUPER_ADMIN)
+            fixtures.setupAccount()
+            val email = fixtures.regularEmail
+            val userId = userRepo.findByEmail(email)?.id
+
+            val updateRequest = fixtures.userUpdateRequest.copy(roleName = RoleName.ROLE_ADMIN.toString())
+
+            // when
+            val response = mockMvc.put("${fixtures.superAdminUrl}/${userId}") {
+                contentType = MediaType.APPLICATION_JSON
+                content = mapper.writeValueAsString(updateRequest)
+                header("Authorization", "Bearer $jwt")
+            }
+
+            // then
+            response.andExpect {
+                status { isOk() }
+            }
+
+            val updatedUser = userRepo.findById(userId!!)
+                .getOrElse { throw IllegalStateException("User not found") }
+            assertEquals(RoleName.ROLE_ADMIN, updatedUser.role.name)
+        }
+
+        @Test
+        fun `should update another admin's password`() {
+            // given
+            val jwt = fixtures.setupAccount(RoleName.ROLE_SUPER_ADMIN)
+            fixtures.setupAccount(RoleName.ROLE_ADMIN)
+            val email = fixtures.adminSetupEmail
+            val userId = userRepo.findByEmail(email)?.id
+            val oldPassword = userRepo.findByEmail(email)?.password
+
+            val updateRequest = fixtures.changePasswordRequest
+
+            // when
+            val response = mockMvc.put("${fixtures.superAdminUrl}/${userId}/password") {
+                contentType = MediaType.APPLICATION_JSON
+                content = mapper.writeValueAsString(updateRequest)
+                header("Authorization", "Bearer $jwt")
+            }
+
+            // then
+            response.andExpect {
+                status { isOk() }
+            }
+
+            val updatedUser = userRepo.findById(userId!!)
+                .getOrElse { throw IllegalStateException("User not found") }
+            assertNotEquals(oldPassword, updatedUser.password)
         }
     }
 }
