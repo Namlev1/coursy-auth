@@ -13,6 +13,7 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.MediaType
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
+import org.springframework.test.web.servlet.delete
 import org.springframework.test.web.servlet.post
 import org.springframework.test.web.servlet.put
 import org.springframework.transaction.annotation.Transactional
@@ -249,6 +250,32 @@ class SuperAdminControllerTest @Autowired constructor(
             val updatedUser = userRepo.findById(userId!!)
                 .getOrElse { throw IllegalStateException("User not found") }
             assertNotEquals(oldPassword, updatedUser.password)
+        }
+    }
+
+    @Nested
+    inner class `User removal` {
+        @Test
+        fun `should remove admin`() {
+            // given
+            val jwt = fixtures.setupAccount(RoleName.ROLE_SUPER_ADMIN)
+            fixtures.setupAccount(RoleName.ROLE_ADMIN)
+            val email = fixtures.adminSetupEmail
+            val userId = userRepo.findByEmail(email)?.id
+
+            // when
+            val response = mockMvc.delete("${fixtures.superAdminUrl}/$userId") {
+                contentType = MediaType.APPLICATION_JSON
+                header("Authorization", "Bearer $jwt")
+            }
+
+            // then
+            response.andExpect {
+                status { isNoContent() }
+            }
+
+            val user = userRepo.findById(userId!!)
+            assertNotNull(user)
         }
     }
 }
