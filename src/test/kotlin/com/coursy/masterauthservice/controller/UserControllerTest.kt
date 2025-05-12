@@ -1,5 +1,6 @@
 package com.coursy.masterauthservice.controller
 
+import com.coursy.masterauthservice.dto.ChangePasswordRequest
 import com.coursy.masterauthservice.model.RoleName
 import com.coursy.masterauthservice.repository.UserRepository
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -13,8 +14,11 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.MediaType
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
+import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.post
+import org.springframework.test.web.servlet.put
 import org.springframework.transaction.annotation.Transactional
+import kotlin.test.assertNotEquals
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -153,6 +157,107 @@ class UserControllerTest @Autowired constructor(
             }
             val user = userRepo.findByEmail(registrationRequest.email)
             assertEquals(RoleName.ROLE_USER, user?.role?.name)
+        }
+
+        @Test
+        fun `should not create user if password is too weak`() {
+            // given
+            val registrationRequest = fixtures.createRegistrationRequest(password = "weak password")
+
+            // when
+            val response = mockMvc.post(fixtures.userUrl) {
+                contentType = MediaType.APPLICATION_JSON
+                content = mapper.writeValueAsString(registrationRequest)
+            }
+
+            // then
+            response.andExpect {
+                status { isBadRequest() }
+            }
+        }
+    }
+
+    @Nested
+    inner class `Current user data manipulation` {
+        @Test
+        fun `should retrieve current user data`() {
+            // given
+            val jwt = fixtures.setupAccount(RoleName.ROLE_USER)
+
+            // when
+            val response = mockMvc.get(fixtures.userUrl + "/me") {
+                contentType = MediaType.APPLICATION_JSON
+                content = null
+                header("Authorization", "Bearer $jwt")
+            }
+
+            // then
+            response.andExpect {
+                status { isOk() }
+                jsonPath("$.email") { value(fixtures.regularUserRequest.email) }
+                jsonPath("$.firstName") { value(fixtures.regularUserRequest.firstName) }
+                jsonPath("$.lastName") { value(fixtures.regularUserRequest.lastName) }
+            }
+
+        }
+
+        @Test
+        fun `should not retrieve current user data when not authenticated`() {
+            // when
+            val response = mockMvc.get(fixtures.userUrl + "/me") {
+                contentType = MediaType.APPLICATION_JSON
+            }
+
+            // then
+            response.andExpect {
+                status { isForbidden() }
+            }
+        }
+
+        @Test
+        fun `should change password`() {
+            // given
+            val jwt = fixtures.setupAccount(RoleName.ROLE_USER)
+            val oldPassword = userRepo.findByEmail(fixtures.regularUserRequest.email)?.password
+            val changePasswordRequest = fixtures.changePasswordRequest
+
+            // when
+            val response = mockMvc.put(fixtures.userUrl + "/me/password") {
+                contentType = MediaType.APPLICATION_JSON
+                content = mapper.writeValueAsString(changePasswordRequest)
+                header("Authorization", "Bearer $jwt")
+            }
+
+            // then
+            response.andExpect {
+                status { isOk() }
+            }
+
+            val user = userRepo.findByEmail(fixtures.regularUserRequest.email)
+            assertNotEquals(oldPassword, user?.password)
+        }
+
+        @Test
+        fun `should not change password if too weak`() {
+            // given
+            val jwt = fixtures.setupAccount(RoleName.ROLE_USER)
+            val oldPassword = userRepo.findByEmail(fixtures.regularUserRequest.email)?.password
+            val changePasswordRequest = ChangePasswordRequest(password = "too weak password")
+
+            // when
+            val response = mockMvc.put(fixtures.userUrl + "/me/password") {
+                contentType = MediaType.APPLICATION_JSON
+                content = mapper.writeValueAsString(changePasswordRequest)
+                header("Authorization", "Bearer $jwt")
+            }
+
+            // then
+            response.andExpect {
+                status { isBadRequest() }
+            }
+
+            val user = userRepo.findByEmail(fixtures.regularUserRequest.email)
+            assertEquals(oldPassword, user?.password)
         }
     }
 }

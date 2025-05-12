@@ -1,5 +1,6 @@
 package com.coursy.masterauthservice.controller
 
+import com.coursy.masterauthservice.dto.ChangePasswordRequest
 import com.coursy.masterauthservice.dto.JwtResponse
 import com.coursy.masterauthservice.dto.LoginRequest
 import com.coursy.masterauthservice.dto.RegistrationRequest
@@ -84,6 +85,10 @@ class ControllerTestFixtures(
         password = regularPassword,
         companyName = null,
         roleName = superAdminRoleName
+    )
+
+    val changePasswordRequest = ChangePasswordRequest(
+        password = "newPassw0RD!"
     )
 
     fun createRegistrationRequest(
