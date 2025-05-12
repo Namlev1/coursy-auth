@@ -20,6 +20,7 @@ import org.springframework.test.web.servlet.post
 import org.springframework.test.web.servlet.put
 import org.springframework.transaction.annotation.Transactional
 import java.nio.charset.StandardCharsets
+import kotlin.test.assertNotEquals
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -360,6 +361,61 @@ class AdminControllerTest @Autowired constructor(
             // then
             response.andExpect {
                 status { isForbidden() }
+            }
+        }
+
+        @Nested
+        inner class `password change` {
+            @Test
+            fun `should update regular user password`() {
+                // given
+                val jwt = fixtures.setupAccount(RoleName.ROLE_ADMIN)
+                fixtures.setupAccount()
+                val email = fixtures.regularEmail
+                val userId = userRepo.findByEmail(email)?.id
+                val oldPassword = userRepo.findByEmail(email)?.password
+                val request = fixtures.changePasswordRequest
+
+                // when
+                val response = mockMvc.put(fixtures.adminUrl + "/${userId}/password") {
+                    contentType = MediaType.APPLICATION_JSON
+                    content = mapper.writeValueAsString(request)
+                    header("Authorization", "Bearer $jwt")
+                }
+
+                // then
+                response.andExpect {
+                    status { isOk() }
+                }
+
+                val user = userRepo.findByEmail(fixtures.regularUserRequest.email)
+                assertNotEquals(oldPassword, user?.password)
+            }
+
+            @Test
+            fun `should not update another admin's password`() {
+                // given
+                val jwt = fixtures.setupAccount(RoleName.ROLE_ADMIN)
+                fixtures.setupAccount(RoleName.ROLE_SUPER_ADMIN)
+                val email = fixtures.superAdminSetupEmail
+                val userId = userRepo.findByEmail(email)?.id
+                val oldPassword = userRepo.findByEmail(email)?.password
+                val request = fixtures.changePasswordRequest
+
+                // when
+                val response = mockMvc.put(fixtures.adminUrl + "/${userId}/password") {
+                    contentType = MediaType.APPLICATION_JSON
+                    content = mapper.writeValueAsString(request)
+                    header("Authorization", "Bearer $jwt")
+                }
+
+                // then
+                response.andExpect {
+                    status { isForbidden() }
+                }
+
+                val user = userRepo.findByEmail(email)
+                assertEquals(oldPassword, user?.password)
             }
         }
     }
