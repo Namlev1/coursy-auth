@@ -14,10 +14,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.MediaType
 import org.springframework.test.context.ActiveProfiles
-import org.springframework.test.web.servlet.MockMvc
-import org.springframework.test.web.servlet.get
-import org.springframework.test.web.servlet.post
-import org.springframework.test.web.servlet.put
+import org.springframework.test.web.servlet.*
 import org.springframework.transaction.annotation.Transactional
 import java.nio.charset.StandardCharsets
 import kotlin.test.assertNotEquals
@@ -417,6 +414,55 @@ class AdminControllerTest @Autowired constructor(
                 val user = userRepo.findByEmail(email)
                 assertEquals(oldPassword, user?.password)
             }
+        }
+    }
+
+    @Nested
+    inner class `User removal` {
+        @Test
+        fun `should remove user`() {
+            // given
+            val jwt = fixtures.setupAccount(RoleName.ROLE_ADMIN)
+            fixtures.setupAccount()
+            val email = fixtures.regularEmail
+            val userId = userRepo.findByEmail(email)?.id
+
+            // when
+            val response = mockMvc.delete("${fixtures.adminUrl}/$userId") {
+                contentType = MediaType.APPLICATION_JSON
+                header("Authorization", "Bearer $jwt")
+            }
+
+            // then
+            response.andExpect {
+                status { isNoContent() }
+            }
+
+            val user = userRepo.findById(userId!!)
+            assertNotNull(user)
+        }
+
+        @Test
+        fun `should not remove admin`() {
+            // given
+            val jwt = fixtures.setupAccount(RoleName.ROLE_ADMIN)
+            fixtures.setupAccount(RoleName.ROLE_SUPER_ADMIN)
+            val email = fixtures.superAdminSetupEmail
+            val userId = userRepo.findByEmail(email)?.id
+
+            // when
+            val response = mockMvc.delete("${fixtures.adminUrl}/$userId") {
+                contentType = MediaType.APPLICATION_JSON
+                header("Authorization", "Bearer $jwt")
+            }
+
+            // then
+            response.andExpect {
+                status { isForbidden() }
+            }
+
+            val user = userRepo.findByEmail(email)
+            assertNotNull(user)
         }
     }
 }
