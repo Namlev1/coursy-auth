@@ -1,6 +1,6 @@
 spring:
   application:
-    name: master-auth-service
+    name: coursy-auth
   datasource:
     url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:9001}/${DB_NAME:auth_db}
     username: ${DB_USER:postgres}
