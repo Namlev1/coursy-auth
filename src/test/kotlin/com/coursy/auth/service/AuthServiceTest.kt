@@ -12,9 +12,7 @@ import com.coursy.auth.model.RefreshToken
 import com.coursy.auth.model.User
 import com.coursy.auth.repository.UserRepository
 import com.coursy.auth.security.UserDetailsImp
-import com.coursy.auth.type.CompanyName
 import com.coursy.auth.type.Email
-import com.coursy.auth.type.Name
 import com.coursy.auth.type.Password
 import io.kotest.assertions.arrow.core.shouldBeLeft
 import io.kotest.assertions.arrow.core.shouldBeRight
@@ -25,7 +23,6 @@ import io.mockk.*
 import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.Authentication
-import org.springframework.security.core.authority.SimpleGrantedAuthority
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 import java.util.*
@@ -47,15 +44,8 @@ class AuthServiceTest : DescribeSpec({
         val refreshToken = "test-refresh-token"
 
         // User data
-        val firstName = Name.create("John").getOrNull()!!
-        val lastName = Name.create("Doe").getOrNull()!!
         val email = Email.create("test@example.com").getOrNull()!!
         val password = Password.create("Password123!").getOrNull()!!
-        val companyName = CompanyName.create("Test Company").getOrNull()!!
-
-        // Role
-        val userRoleName = RoleName.ROLE_USER
-        val userRole = Role(id = 1L, name = userRoleName)
 
         // Request objects
         val validLoginRequest by lazy {
@@ -74,24 +64,16 @@ class AuthServiceTest : DescribeSpec({
         // User object
         fun createUser(
             id: Long = userId,
-            firstName: Name = this.firstName,
-            lastName: Name = this.lastName,
             email: Email = this.email,
             password: String = "encodedPassword",
-            companyName: CompanyName = this.companyName,
-            role: Role = userRole,
             lastLogin: Instant = Instant.now(),
             enabled: Boolean = true,
             accountNonLocked: Boolean = true,
-            failedAttempts: Int = 0
+            failedAttempts: Int = 0,
         ) = User(
             id = id,
-            firstName = firstName,
-            lastName = lastName,
             email = email,
             password = password,
-            companyName = companyName,
-            role = role,
             lastLogin = lastLogin,
             enabled = enabled,
             accountNonLocked = accountNonLocked,
@@ -103,7 +85,7 @@ class AuthServiceTest : DescribeSpec({
             id: Long = 1L,
             token: String = refreshToken,
             user: User = createUser(),
-            expiryDate: Instant = Instant.now().plus(7, ChronoUnit.DAYS)
+            expiryDate: Instant = Instant.now().plus(7, ChronoUnit.DAYS),
         ) = RefreshToken(
             id = id,
             token = token,
@@ -116,20 +98,12 @@ class AuthServiceTest : DescribeSpec({
             id: Long = userId,
             email: Email = this.email,
             password: String = this.password.value,
-            firstName: Name = this.firstName,
-            lastName: Name = this.lastName,
-            companyName: CompanyName? = this.companyName,
-            authorities: MutableCollection<SimpleGrantedAuthority> = mutableSetOf(SimpleGrantedAuthority("ROLE_USER")),
             enabled: Boolean = true,
-            accountNonLocked: Boolean = true
+            accountNonLocked: Boolean = true,
         ) = UserDetailsImp(
             id = id,
             email = email,
-            authorities = authorities,
             password = password,
-            firstName = firstName,
-            lastName = lastName,
-            companyName = companyName,
             enabled = enabled,
             accountNonLocked = accountNonLocked
         )
