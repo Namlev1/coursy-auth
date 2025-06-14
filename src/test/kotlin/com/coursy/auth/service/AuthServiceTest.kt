@@ -9,8 +9,6 @@ import com.coursy.auth.failure.RefreshTokenFailure
 import com.coursy.auth.jwt.JwtTokenService
 import com.coursy.auth.jwt.RefreshTokenService
 import com.coursy.auth.model.RefreshToken
-import com.coursy.auth.model.Role
-import com.coursy.auth.model.RoleName
 import com.coursy.auth.model.User
 import com.coursy.auth.repository.UserRepository
 import com.coursy.auth.security.UserDetailsImp

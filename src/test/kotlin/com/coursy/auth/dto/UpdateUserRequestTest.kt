@@ -2,8 +2,6 @@ package com.coursy.auth.dto
 
 import com.coursy.auth.failure.CompanyNameFailure
 import com.coursy.auth.failure.NameFailure
-import com.coursy.auth.failure.RoleFailure
-import com.coursy.auth.model.RoleName
 import io.kotest.assertions.arrow.core.shouldBeLeft
 import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.core.spec.style.DescribeSpec

@@ -1,7 +1,6 @@
 package com.coursy.auth.dto
 
 import com.coursy.auth.failure.*
-import com.coursy.auth.model.RoleName
 import io.kotest.assertions.arrow.core.shouldBeLeft
 import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.core.spec.style.DescribeSpec

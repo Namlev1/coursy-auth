@@ -1,6 +1,5 @@
 package com.coursy.auth.controller
 
-import com.coursy.auth.model.RoleName
 import com.coursy.auth.repository.UserRepository
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.junit.jupiter.api.Assertions.assertEquals

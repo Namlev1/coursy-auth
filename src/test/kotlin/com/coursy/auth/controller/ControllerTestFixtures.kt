@@ -1,7 +1,6 @@
 package com.coursy.auth.controller
 
 import com.coursy.auth.dto.*
-import com.coursy.auth.model.RoleName
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.http.MediaType
 import org.springframework.stereotype.Component

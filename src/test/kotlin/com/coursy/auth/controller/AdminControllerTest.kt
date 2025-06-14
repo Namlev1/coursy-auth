@@ -2,7 +2,6 @@ package com.coursy.auth.controller
 
 import com.coursy.auth.dto.UserResponse
 import com.coursy.auth.failure.AuthorizationFailure
-import com.coursy.auth.model.RoleName
 import com.coursy.auth.repository.UserRepository
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -17,6 +16,7 @@ import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.*
 import org.springframework.transaction.annotation.Transactional
 import java.nio.charset.StandardCharsets
+import kotlin.jvm.java
 import kotlin.test.assertNotEquals
 
 @SpringBootTest
