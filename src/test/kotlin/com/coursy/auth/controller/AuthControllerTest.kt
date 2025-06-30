@@ -14,5 +14,5 @@ import org.springframework.transaction.annotation.Transactional
 class AuthControllerTest(
     private val mockMvc: MockMvc
 ) : DescribeSpec({
-    val url = "/v1/auth"
+    val url = "/api/auth"
 })

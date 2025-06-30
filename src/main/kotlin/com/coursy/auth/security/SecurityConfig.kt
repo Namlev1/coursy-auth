@@ -36,7 +36,7 @@ class SecurityConfig(
             .authorizeHttpRequests {
                 it
                     .requestMatchers(
-                        "/v1/auth/**",
+                        "/api/auth/**",
                     ).permitAll()
                     .anyRequest().authenticated()
             }

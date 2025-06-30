@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.*
 // TODO: When USERS registers new account, it must send message to AUTH
 //  in order to create new auth record in db.
 @RestController
-@RequestMapping("/auth")
+@RequestMapping("/api/auth")
 class AuthController(
     private val authService: AuthService,
     private val httpFailureResolver: HttpFailureResolver,
