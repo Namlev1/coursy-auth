@@ -95,7 +95,7 @@ class AuthServiceTest : DescribeSpec({
 
         // UserDetails object
         fun createUserDetails(
-            id: Long = userId,
+            id: UUID = userId,
             email: Email = this.email,
             password: String = this.password.value,
             enabled: Boolean = true,

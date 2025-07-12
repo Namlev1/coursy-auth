@@ -38,7 +38,7 @@ class RefreshTokenServiceTest : DescribeSpec({
         context("when creating new refresh token") {
             it("should create and return a valid refresh token for existing user") {
                 // given
-                val userId = 1L
+                val userId = UUID.fromString("a81bc81b-dead-4e5d-abff-90865d1e13b1")
                 val mockUser = mockk<User>()
                 val mockRefreshToken = mockk<RefreshToken>()
                 val mockOptional = mockk<Optional<User>>()
@@ -69,7 +69,7 @@ class RefreshTokenServiceTest : DescribeSpec({
 
             it("should return UserFailure.IdNotExists when user not found") {
                 // given
-                val userId = 999L
+                val userId = UUID.fromString("550e8400-e29b-41d4-a716-446655440000")
                 val mockOptional = mockk<Optional<User>>()
 
                 every { mockOptional.getOrNull() } returns null
