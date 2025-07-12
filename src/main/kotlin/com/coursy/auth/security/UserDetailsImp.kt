@@ -4,9 +4,10 @@ import com.coursy.auth.model.User
 import com.coursy.auth.type.Email
 import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.core.userdetails.UserDetails
+import java.util.*
 
 class UserDetailsImp(
-    val id: Long,
+    val id: UUID,
     val email: Email,
     private val password: String,
     private val enabled: Boolean,

@@ -2,12 +2,12 @@ package com.coursy.auth.model
 
 import jakarta.persistence.*
 import java.time.Instant
+import java.util.*
 
 @Entity
 class RefreshToken(
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    var id: Long = 0,
+    var id: UUID = UUID.randomUUID(),
 
     @OneToOne
     @JoinColumn(name = "user_id", referencedColumnName = "id")

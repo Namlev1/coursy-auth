@@ -23,7 +23,7 @@ class RefreshTokenService(
     @Value("\${jwt.refresh-token-expiration}")
     private val refreshTokenDurationMs: Long
 ) {
-    fun createRefreshToken(userId: Long): Either<UserFailure, RefreshToken> {
+    fun createRefreshToken(userId: UUID): Either<UserFailure, RefreshToken> {
         val user = userRepository.findById(userId).getOrNull()
             ?: return UserFailure.IdNotExists.left()
 

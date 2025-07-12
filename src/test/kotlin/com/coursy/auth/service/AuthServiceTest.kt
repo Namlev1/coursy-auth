@@ -39,7 +39,7 @@ class AuthServiceTest : DescribeSpec({
 
     class TestFixtures {
         // Common values
-        val userId = 1L
+        val userId = UUID.fromString("123e4567-e89b-12d3-a456-426614174000")
         val jwtToken = "test.jwt.token"
         val refreshToken = "test-refresh-token"
 
@@ -63,7 +63,7 @@ class AuthServiceTest : DescribeSpec({
 
         // User object
         fun createUser(
-            id: Long = userId,
+            id: UUID = userId,
             email: Email = this.email,
             password: String = "encodedPassword",
             lastLogin: Instant = Instant.now(),
@@ -82,7 +82,7 @@ class AuthServiceTest : DescribeSpec({
 
         // RefreshToken object
         fun createRefreshToken(
-            id: Long = 1L,
+            id: UUID = UUID.fromString("123e4567-e89b-12d3-a456-426614174001"),
             token: String = refreshToken,
             user: User = createUser(),
             expiryDate: Instant = Instant.now().plus(7, ChronoUnit.DAYS),

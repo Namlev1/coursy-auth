@@ -1,15 +1,17 @@
 package com.coursy.auth.model
 
 import com.coursy.auth.type.Email
-import jakarta.persistence.*
+import jakarta.persistence.Column
+import jakarta.persistence.Entity
+import jakarta.persistence.Id
 import org.hibernate.Hibernate
 import java.time.Instant
+import java.util.*
 
 @Entity(name = "_user")
 class User(
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    var id: Long = 0,
+    var id: UUID = UUID.randomUUID(),
     @Column(unique = true)
     var email: Email,
     var password: String,

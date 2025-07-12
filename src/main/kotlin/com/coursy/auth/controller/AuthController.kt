@@ -26,7 +26,6 @@ class AuthController(
     @PostMapping("/test-add")
     fun addtodb() = userRepository.save(
         User(
-            id = 0,
             email = Email.create("email@email.com").getOrNull()!!,
             password = encoder.encode("pa##w0RD")
         )
