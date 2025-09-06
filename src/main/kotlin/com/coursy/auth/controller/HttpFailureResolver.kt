@@ -13,6 +13,7 @@ class HttpFailureResolver {
     fun handleFailure(failure: Failure): ResponseEntity<Any> =
         when (failure) {
             is UserFailure.IdNotExists -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(failure.message())
+            is UserFailure.IdExists -> ResponseEntity.status(HttpStatus.CONFLICT).body(failure.message())
             is RefreshTokenFailure.Empty -> ResponseEntity.status(HttpStatus.BAD_REQUEST).body(failure.message())
             is RefreshTokenFailure.NotFound -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(failure.message())
             is RefreshTokenFailure.Expired -> ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(failure.message())

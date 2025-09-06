@@ -3,10 +3,9 @@ package com.coursy.auth.controller
 import arrow.core.flatMap
 import com.coursy.auth.dto.LoginRequest
 import com.coursy.auth.dto.RefreshJwtRequest
-import com.coursy.auth.model.User
+import com.coursy.auth.dto.RegistrationRequest
 import com.coursy.auth.repository.UserRepository
 import com.coursy.auth.service.AuthService
-import com.coursy.auth.type.Email
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.crypto.password.PasswordEncoder
@@ -22,18 +21,11 @@ class AuthController(
     private val userRepository: UserRepository,
     private val encoder: PasswordEncoder,
 ) {
-    // TODO remove at production
-    @PostMapping("/test-add")
-    fun addtodb() = userRepository.save(
-        User(
-            email = Email.create("email@email.com").getOrNull()!!,
-            password = encoder.encode("pa##w0RD")
-        )
-    )
-    
     @PostMapping("/login")
     fun authenticateUser(@RequestBody request: LoginRequest): ResponseEntity<Any> {
-        val result = request.validate().flatMap { validated -> authService.authenticateUser(validated) }
+        val result = request
+            .validate()
+            .flatMap { validated -> authService.authenticateUser(validated) }
 
         return result.fold(
             { failure -> httpFailureResolver.handleFailure(failure) },
@@ -50,5 +42,16 @@ class AuthController(
             { jwtResponse -> ResponseEntity.status(HttpStatus.OK).body(jwtResponse) }
         )
     }
-    
+
+
+    // TODO: make this endpoint only available internally
+    @PostMapping("/register")
+    fun registerUser(@RequestBody request: RegistrationRequest): ResponseEntity<Any> {
+        return authService
+            .registerUser(request)
+            .fold(
+                { failure -> return httpFailureResolver.handleFailure(failure) },
+                { ResponseEntity.status(HttpStatus.CREATED).build() }
+            )
+    }
 }

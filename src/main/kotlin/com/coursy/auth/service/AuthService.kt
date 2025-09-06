@@ -7,11 +7,14 @@ import arrow.core.right
 import com.coursy.auth.dto.JwtResponse
 import com.coursy.auth.dto.LoginRequest
 import com.coursy.auth.dto.RefreshJwtRequest
+import com.coursy.auth.dto.RegistrationRequest
 import com.coursy.auth.failure.AuthenticationFailure
 import com.coursy.auth.failure.Failure
 import com.coursy.auth.failure.RefreshTokenFailure
+import com.coursy.auth.failure.UserFailure
 import com.coursy.auth.jwt.JwtTokenService
 import com.coursy.auth.jwt.RefreshTokenService
+import com.coursy.auth.model.User
 import com.coursy.auth.repository.UserRepository
 import com.coursy.auth.security.UserDetailsImp
 import com.coursy.auth.security.toUserDetails
@@ -19,6 +22,7 @@ import jakarta.transaction.Transactional
 import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.context.SecurityContextHolder
+import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 import java.time.Instant
 
@@ -28,7 +32,8 @@ class AuthService(
     private val userRepository: UserRepository,
     private val authenticationManager: AuthenticationManager,
     private val jwtTokenService: JwtTokenService,
-    private val refreshTokenService: RefreshTokenService
+    private val refreshTokenService: RefreshTokenService,
+    private val passwordEncoder: PasswordEncoder
 ) {
     fun authenticateUser(loginRequest: LoginRequest.Validated): Either<Failure, JwtResponse> {
         val authentication = runCatching {
@@ -70,6 +75,22 @@ class AuthService(
             token = newJwt,
             refreshToken = refreshToken.token
         ).right()
+    }
+
+    fun registerUser(request: RegistrationRequest): Either<UserFailure, Unit> {
+        val encryptedPassword = passwordEncoder.encode(request.password.value)
+        val user = User(
+            id = request.id,
+            email = request.email,
+            password = encryptedPassword
+        )
+       
+        try {
+            userRepository.save(user)
+            return Unit.right()
+        } catch (e: Exception) {
+            return UserFailure.IdExists.left()
+        }
     }
 
     private fun updateLastLogin(userDetails: UserDetailsImp) {

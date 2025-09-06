@@ -38,7 +38,7 @@ class JwtUtils(
 
     private fun generateJwt(subject: String, roles: Collection<GrantedAuthority>): String = JWT.create()
         .withSubject(subject)
-        .withClaim("roles", roles.map { it.authority })
+        .withClaim("roles", roles.map { it.authority }) // TODO pull roles from USERS
         .withIssuedAt(Date())
         .withExpiresAt(Date(System.currentTimeMillis() + jwtExpirationMs))
         .sign(Algorithm.HMAC256(jwtSecret))
