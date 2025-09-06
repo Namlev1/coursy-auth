@@ -7,6 +7,7 @@ import com.coursy.auth.failure.Failure
 import com.coursy.auth.type.Email
 import com.coursy.auth.type.Password
 
+// todo on login don't validate password
 data class LoginRequest(
     val email: String,
     val password: String
