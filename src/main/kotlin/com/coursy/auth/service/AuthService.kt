@@ -43,7 +43,8 @@ class AuthService(
         }.getOrElse { return AuthenticationFailure.InvalidCredentials.left() }
 
         SecurityContextHolder.getContext().authentication = authentication
-        val jwt = jwtTokenService.generateJwtToken(authentication)
+       
+        val jwt = jwtTokenService.generateJwtToken(authentication.principal as UserDetailsImp)
 
         val userDetails = authentication.principal as UserDetailsImp
 
