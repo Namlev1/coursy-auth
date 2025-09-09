@@ -1,0 +1,3 @@
+services:
+  users:
+    url: http://users-service:8080
