@@ -1,6 +1,5 @@
 package com.coursy.auth.internal.users
 
-import com.coursy.auth.model.Role
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.HttpStatusCode
 import org.springframework.stereotype.Component
@@ -15,16 +14,17 @@ class UsersServiceClient(
     @param:Value("\${services.users.url}")
     private val authServiceUrl: String
 ) {
-    fun getUserRole(userId: UUID): Role? {
+    fun getUser(userId: UUID): UserResponse {
         return webClient
             .get()
-            .uri("$authServiceUrl/api/internal/users/$userId/role")
+            .uri("$authServiceUrl/api/internal/users/$userId")
             .header("Content-Type", "application/json")
             .retrieve()
             .onStatus(HttpStatusCode::isError) { response ->
-                Mono.error(RuntimeException("Users service error: ${response.statusCode()}"))
+                Mono.error(RuntimeException("USERS service error: ${response.statusCode()}"))
             }
-            .bodyToMono<Role>()
-            .block()
+            .bodyToMono<UserResponse>()
+            .blockOptional()
+            .orElseThrow { RuntimeException("USERS service returned null for id: $userId") }
     }
 }

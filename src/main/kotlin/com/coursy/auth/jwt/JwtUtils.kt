@@ -2,8 +2,8 @@ package com.coursy.auth.jwt
 
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
+import com.coursy.auth.internal.users.UserResponse
 import com.coursy.auth.internal.users.UsersServiceClient
-import com.coursy.auth.model.Role
 import com.coursy.auth.security.UserDetailsImp
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
@@ -35,15 +35,20 @@ class JwtUtils(
         }.getOrElse { false }
 
     private fun generateJwt(userDetails: UserDetailsImp): String {
-        val role = usersServiceClient.getUserRole(userDetails.id)
-
-        return generateJwt(userDetails.email.value, role)
+        val userData = usersServiceClient.getUser(userDetails.id)
+        return generateJwt(userData)
     }
 
-    private fun generateJwt(subject: String, role: Role?): String = JWT.create()
-        .withSubject(subject)
-        .withClaim("role", role?.toString())
-        .withIssuedAt(Date())
-        .withExpiresAt(Date(System.currentTimeMillis() + jwtExpirationMs))
-        .sign(Algorithm.HMAC256(jwtSecret))
+    private fun generateJwt(
+        userData: UserResponse
+    ): String = userData.run {
+        JWT.create()
+            .withSubject(email)
+            .withClaim("id", id.toString())
+            .withClaim("platformId", platformId.toString())
+            .withClaim("role", roleName.toString())
+            .withIssuedAt(Date())
+            .withExpiresAt(Date(System.currentTimeMillis() + jwtExpirationMs))
+            .sign(Algorithm.HMAC256(jwtSecret))
+    }
 }
