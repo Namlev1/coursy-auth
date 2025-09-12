@@ -45,7 +45,7 @@ class JwtUtils(
         JWT.create()
             .withSubject(email)
             .withClaim("id", id.toString())
-            .withClaim("platformId", platformId.toString())
+            .withClaim("platformId", platformId?.toString())
             .withClaim("role", roleName.toString())
             .withIssuedAt(Date())
             .withExpiresAt(Date(System.currentTimeMillis() + jwtExpirationMs))
