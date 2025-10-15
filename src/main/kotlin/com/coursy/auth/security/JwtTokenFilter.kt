@@ -1,90 +1,55 @@
 package com.coursy.auth.security
 
-import arrow.core.Either
-import arrow.core.left
-import arrow.core.right
-import com.coursy.auth.failure.AuthHeaderFailure
-import com.coursy.auth.failure.JwtFailure
-import com.coursy.auth.jwt.JwtTokenService
+import arrow.core.Option
+import arrow.core.getOrElse
+import com.auth0.jwt.JWT
+import com.coursy.auth.type.Email
 import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
+import org.slf4j.LoggerFactory
+import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.context.SecurityContextHolder
-import org.springframework.security.web.authentication.WebAuthenticationDetailsSource
+import org.springframework.security.web.authentication.preauth.PreAuthenticatedAuthenticationToken
 import org.springframework.stereotype.Component
 import org.springframework.web.filter.OncePerRequestFilter
 
 @Component
-class JwtTokenFilter(
-    private val jwtTokenService: JwtTokenService,
-    private val userDetailsService: UserDetailsServiceImp
-) : OncePerRequestFilter() {
+class JwtTokenFilter : OncePerRequestFilter() {
+    private val log = LoggerFactory.getLogger(this::class.java)
 
     override fun doFilterInternal(
         request: HttpServletRequest,
         response: HttpServletResponse,
         filterChain: FilterChain
     ) {
-        try {
-            extractAndProcessJwt(request)
-        } finally {
-            filterChain.doFilter(request, response)
-        }
-    }
-
-    private fun extractAndProcessJwt(request: HttpServletRequest) {
-        parseJwt(request).fold(
-            { authHeaderFailure -> handleHeaderFailure(authHeaderFailure) },
-            { jwt -> authenticateWithJwt(jwt, request) }
-        )
-    }
-
-    private fun handleHeaderFailure(error: AuthHeaderFailure) {
-        when (error) {
-            is AuthHeaderFailure.InvalidHeaderFormat ->
-                logger.warn("Invalid Authorization header format: ${error.message()}")
-
-            else -> {}
-        }
-    }
-
-    private fun authenticateWithJwt(jwt: String, request: HttpServletRequest) {
-        setAuthenticationContext(jwt, request).fold(
-            { jwtError -> logger.warn("JWT token processing error: ${jwtError.message()}") },
-            { /* Authentication successful, no action needed */ }
-        )
-    }
-
-    private fun parseJwt(request: HttpServletRequest): Either<AuthHeaderFailure, String> {
-        val headerAuth = request.getHeader("Authorization")
-            ?: return AuthHeaderFailure.MissingHeader.left()
-
-        return if (headerAuth.startsWith("Bearer ")) {
-            headerAuth.removePrefix("Bearer ").trim().right()
-        } else {
-            AuthHeaderFailure.InvalidHeaderFormat(headerAuth).left()
-        }
-    }
-
-    private fun setAuthenticationContext(
-        jwt: String,
-        request: HttpServletRequest
-    ): Either<JwtFailure, Unit> {
-        return try {
-            val email = jwtTokenService.getUserEmailFromJwtToken(jwt)
-            val userDetails = userDetailsService.loadUserByUsername(email)
-
-            val authentication = UsernamePasswordAuthenticationToken(
-                userDetails, null, userDetails.authorities
-            ).apply {
-                details = WebAuthenticationDetailsSource().buildDetails(request)
+        extractToken(request).map { token ->
+            val jwt = JWT.decode(token)
+            val email = Email.create(jwt.subject).getOrElse { failure ->
+                log.warn("Invalid email format in JWT: ${jwt.subject}")
+                response.status = 400
+                response.writer.write(failure.message())
+                return
             }
 
+            val roleString = jwt.getClaim("role")?.asString()
+            val authority = SimpleGrantedAuthority(roleString)
+
+            val authentication = PreAuthenticatedAuthenticationToken(
+                email,
+                jwt,
+                listOf(authority)
+            )
+            authentication.isAuthenticated = true
             SecurityContextHolder.getContext().authentication = authentication
-            Unit.right()
-        } catch (e: Exception) {
-            JwtFailure.InvalidToken(jwt).left()
         }
+
+        filterChain.doFilter(request, response)
+    }
+
+    private fun extractToken(request: HttpServletRequest): Option<String> {
+        return Option.fromNullable(request.getHeader("Authorization"))
+            .filter { it.startsWith("Bearer ") }
+            .map { it.substring(7) }
     }
 }

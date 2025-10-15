@@ -18,6 +18,7 @@ import com.coursy.auth.model.User
 import com.coursy.auth.repository.UserRepository
 import com.coursy.auth.security.UserDetailsImp
 import com.coursy.auth.security.toUserDetails
+import com.coursy.auth.type.Email
 import jakarta.transaction.Transactional
 import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
@@ -43,7 +44,7 @@ class AuthService(
         }.getOrElse { return AuthenticationFailure.InvalidCredentials.left() }
 
         SecurityContextHolder.getContext().authentication = authentication
-       
+
         val jwt = jwtTokenService.generateJwtToken(authentication.principal as UserDetailsImp)
 
         val userDetails = authentication.principal as UserDetailsImp
@@ -85,13 +86,22 @@ class AuthService(
             email = request.email,
             password = encryptedPassword
         )
-       
+
         try {
             userRepository.save(user)
             return Unit.right()
         } catch (e: Exception) {
             return UserFailure.IdExists.left()
         }
+    }
+
+    fun logoutUser(email: Email): Either<Failure, Unit> {
+        val user = userRepository.findByEmail(email.value)
+            ?: return UserFailure.IdNotExists.left()
+
+        refreshTokenService.invalidateUserTokens(user)
+
+        return Unit.right()
     }
 
     private fun updateLastLogin(userDetails: UserDetailsImp) {

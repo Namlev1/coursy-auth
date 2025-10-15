@@ -6,6 +6,7 @@ import arrow.core.right
 import com.coursy.auth.failure.RefreshTokenFailure
 import com.coursy.auth.failure.UserFailure
 import com.coursy.auth.model.RefreshToken
+import com.coursy.auth.model.User
 import com.coursy.auth.repository.RefreshTokenRepository
 import com.coursy.auth.repository.UserRepository
 import jakarta.transaction.Transactional
@@ -50,5 +51,9 @@ class RefreshTokenService(
         } else {
             token.right()
         }
+    }
+
+    fun invalidateUserTokens(user: User) {
+        refreshTokenRepository.deleteByUser(user)
     }
 }

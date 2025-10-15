@@ -13,7 +13,7 @@ import java.util.*
 class JwtUtils(
     @Value("\${jwt.secret}")
     private val jwtSecret: String,
-    @Value("\${jwt.access-token-expiration:900000}") // 15 min
+    @Value("\${jwt.access-token-expiration:604800000}") // 7 days
     private val jwtExpirationMs: Int,
     private val usersServiceClient: UsersServiceClient
 ) : JwtTokenService {
