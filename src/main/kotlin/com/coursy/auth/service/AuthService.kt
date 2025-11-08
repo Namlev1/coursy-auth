@@ -4,10 +4,7 @@ import arrow.core.Either
 import arrow.core.getOrElse
 import arrow.core.left
 import arrow.core.right
-import com.coursy.auth.dto.JwtResponse
-import com.coursy.auth.dto.LoginRequest
-import com.coursy.auth.dto.RefreshJwtRequest
-import com.coursy.auth.dto.RegistrationRequest
+import com.coursy.auth.dto.*
 import com.coursy.auth.failure.AuthenticationFailure
 import com.coursy.auth.failure.Failure
 import com.coursy.auth.failure.RefreshTokenFailure
@@ -18,7 +15,6 @@ import com.coursy.auth.model.User
 import com.coursy.auth.repository.UserRepository
 import com.coursy.auth.security.UserDetailsImp
 import com.coursy.auth.security.toUserDetails
-import com.coursy.auth.type.Email
 import jakarta.transaction.Transactional
 import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
@@ -26,6 +22,7 @@ import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 import java.time.Instant
+import java.util.*
 
 @Service
 @Transactional
@@ -37,9 +34,12 @@ class AuthService(
     private val passwordEncoder: PasswordEncoder
 ) {
     fun authenticateUser(loginRequest: LoginRequest.Validated): Either<Failure, JwtResponse> {
+        val platformIdPart = loginRequest.platformId?.toString() ?: "HOST_PLATFORM"
+        val compositeUsername = "${loginRequest.email.value}::${platformIdPart}"
+        
         val authentication = runCatching {
             authenticationManager.authenticate(
-                UsernamePasswordAuthenticationToken(loginRequest.email.value, loginRequest.password.value)
+                UsernamePasswordAuthenticationToken(compositeUsername, loginRequest.password.value)
             )
         }.getOrElse { return AuthenticationFailure.InvalidCredentials.left() }
 
@@ -84,7 +84,8 @@ class AuthService(
         val user = User(
             id = request.id,
             email = request.email,
-            password = encryptedPassword
+            password = encryptedPassword,
+            platformId = request.platformId
         )
 
         try {
@@ -95,9 +96,23 @@ class AuthService(
         }
     }
 
-    fun logoutUser(email: Email): Either<Failure, Unit> {
-        val user = userRepository.findByEmail(email.value)
-            ?: return UserFailure.IdNotExists.left()
+    fun createOwner(request: OwnerRegistrationRequest): Either<UserFailure, Unit> {
+        val ownerOriginal = userRepository.findById(request.currentUserId)
+            .orElseThrow()
+        val ownerAccount = User(
+            id = request.newUserId,
+            email = ownerOriginal.email,
+            password = ownerOriginal.password,
+            platformId = request.platformId
+        )
+
+        userRepository.save(ownerAccount)
+        return Unit.right()
+    }
+
+    fun logoutUser(id: UUID): Either<Failure, Unit> {
+        val user = userRepository.findById(id)
+            .orElseThrow()
 
         refreshTokenService.invalidateUserTokens(user)
 

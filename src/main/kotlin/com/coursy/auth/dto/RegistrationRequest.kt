@@ -7,5 +7,6 @@ import java.util.*
 data class RegistrationRequest(
     val email: Email,
     val password: Password,
-    val id: UUID
+    val id: UUID,
+    val platformId: UUID?
 )

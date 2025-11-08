@@ -1,7 +1,6 @@
 package com.coursy.auth.model
 
 import com.coursy.auth.type.Email
-import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.Id
 import org.hibernate.Hibernate
@@ -12,7 +11,6 @@ import java.util.*
 class User(
     @Id
     var id: UUID = UUID.randomUUID(),
-    @Column(unique = true)
     var email: Email,
     var password: String,
     var createdAt: Instant = Instant.now(),
@@ -21,6 +19,7 @@ class User(
     var enabled: Boolean = true,
     var accountNonLocked: Boolean = true,
     var failedAttempts: Int = 0,
+    var platformId: UUID?
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
