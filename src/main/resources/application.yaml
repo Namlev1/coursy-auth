@@ -10,7 +10,10 @@ spring:
       ddl-auto: update
 jwt:
   secret: ${JWT_SECRET:default_secret_key_which_should_be_very_long_in_production}
-  access-token-expiration: 900000  # 15 minutes
-  refresh-token-expiration: 86400000 # 24 hours
+  access-token-expiration: 900000
+  refresh-token-expiration: 86400000
 server:
-  port: 8085
+  port: ${SERVER_PORT:8085}
+services:
+  users:
+    url: ${USERS_SERVICE_URL:http://localhost:8081}
