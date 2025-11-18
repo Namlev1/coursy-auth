@@ -8,7 +8,6 @@ import com.coursy.auth.type.Email
 import com.coursy.auth.type.Password
 import java.util.*
 
-// todo on login don't validate password
 data class LoginRequest(
     val email: String,
     val password: String,

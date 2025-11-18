@@ -34,7 +34,8 @@ class AuthService(
     private val passwordEncoder: PasswordEncoder
 ) {
     fun authenticateUser(loginRequest: LoginRequest.Validated): Either<Failure, JwtResponse> {
-        val platformIdPart = loginRequest.platformId?.toString() ?: "HOST_PLATFORM"
+        var platformIdPart = loginRequest.platformId?.toString()
+
         val compositeUsername = "${loginRequest.email.value}::${platformIdPart}"
         
         val authentication = runCatching {

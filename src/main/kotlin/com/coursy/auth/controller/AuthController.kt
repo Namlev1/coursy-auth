@@ -18,8 +18,6 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import java.util.*
 
-// TODO: When USERS registers new account, it must send message to AUTH
-//  in order to create new auth record in db.
 @RestController
 @RequestMapping("/api/auth")
 class AuthController(
@@ -64,7 +62,6 @@ class AuthController(
     }
 
 
-    // TODO: make this endpoint only available internally
     @PostMapping("/register")
     fun registerUser(@RequestBody request: RegistrationRequest): ResponseEntity<Any> {
         return authService

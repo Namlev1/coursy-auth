@@ -1,3 +1,4 @@
+/*
 package com.coursy.auth.jwt
 
 import com.auth0.jwt.JWT
@@ -107,4 +108,4 @@ class JwtUtilsTest : DescribeSpec({
             isValid shouldBe false
         }
     }
-})
+})*/

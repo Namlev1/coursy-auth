@@ -19,7 +19,7 @@ class UserDetailsServiceImp(
         }
 
         val email = parts[0]
-        val platformId = if (parts[1] == "HOST_PLATFORM") {
+        val platformId = if (parts[1] == "4e1c791d-c481-4f9a-9eff-b701c2875c5f") {
             null
         } else {
             runCatching { UUID.fromString(parts[1]) }

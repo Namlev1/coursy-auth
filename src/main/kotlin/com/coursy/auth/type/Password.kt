@@ -14,7 +14,7 @@ value class Password private constructor(val value: String) {
         private val LOWERCASE_REGEX = Regex("[a-z]")
         private val DIGIT_REGEX = Regex("[0-9]")
         private val SPECIAL_CHAR_REGEX = Regex("[^A-Za-z0-9]")
-        private val REPEATING_CHARS_REGEX = Regex("(.)\\1{2,}")  // Three or more consecutive same characters
+        private val REPEATING_CHARS_REGEX = Regex("(.)\\1{2,}")
 
         fun create(value: String): Either<PasswordFailure, Password> {
             if (value.isEmpty()) return PasswordFailure.Empty.left()
